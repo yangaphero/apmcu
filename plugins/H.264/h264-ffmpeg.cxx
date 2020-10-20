@@ -108,7 +108,7 @@ H264EncoderContext::H264EncoderContext()
   _txH264Frame = new H264Frame();
   _txH264Frame->SetMaxPayloadSize(H264_PAYLOAD_SIZE);
 
-  if ((_codec = avcodec_find_encoder_by_name("h264_nvenc")) == NULL) {//libx264 h264_nvenc
+  if ((_codec = avcodec_find_encoder_by_name("nvenc")) == NULL) {//libx264 h264_nvenc
     cout << "H264\tEncoder\tCodec not found for encoder\n";
     return;
   }
@@ -140,9 +140,10 @@ H264EncoderContext::H264EncoderContext()
   _context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
   //av_opt_set(_context->priv_data, "profile", "baseline", 0);
-  //av_opt_set(_context->priv_data, "preset", "ultrafast", 0);            
-  //av_opt_set(_context->priv_data, "tune", "zerolatency", 0); 
-  av_opt_set(_context->priv_data, "rc", "cbr", 0);
+  av_opt_set(_context->priv_data, "preset", "ultrafast", 0);            
+  av_opt_set(_context->priv_data, "tune", "zerolatency", 0); 
+  
+  //av_opt_set(_context->priv_data, "rc", "cbr", 0);//cbr的时候每帧前加了sei帧，注意
 	av_opt_set(_context->priv_data, "rc-lookahead", "0", 0);
 	av_opt_set(_context->priv_data, "delay", "0", 0);
 	av_opt_set(_context->priv_data, "zerolatency", "1", 0);
@@ -156,7 +157,14 @@ H264EncoderContext::H264EncoderContext()
 	if (!pkt) {
 	 return;
 	}
-
+  sps_pkt = av_packet_alloc();
+	if (!sps_pkt) {
+	 return;
+	}
+  pps_pkt = av_packet_alloc();
+	if (!pps_pkt) {
+	 return;
+	}
 //by aphero end
 }
 
@@ -180,6 +188,8 @@ H264EncoderContext::~H264EncoderContext()
   if (_txH264Frame) delete _txH264Frame;
   if (pict)   av_frame_free(&pict);
   if (pkt)  av_packet_free(&pkt);
+  if (sps_pkt)  av_packet_free(&sps_pkt);
+  if (pps_pkt)  av_packet_free(&pps_pkt);
   //by aphero end
 
 }
@@ -287,7 +297,7 @@ int H264EncoderContext::EncodeFrames(const u_char * src, unsigned & srcLen, u_ch
     return 1;
   }
 
-//  cout << "here1\n";
+  //cout << "here1\n";
 
 
   if (srcRTP.GetPayloadSize() < sizeof(frameHeader))
@@ -296,7 +306,7 @@ int H264EncoderContext::EncodeFrames(const u_char * src, unsigned & srcLen, u_ch
    return 0;
   }
 
-//  cout << "here2\n";
+  //cout << "here2\n";
 
   frameHeader * header = (frameHeader *)srcRTP.GetPayloadPtr();
   if (header->x != 0 || header->y != 0)
@@ -305,7 +315,7 @@ int H264EncoderContext::EncodeFrames(const u_char * src, unsigned & srcLen, u_ch
     return 0;
   }
 
-//  cout << "here3\n";
+  //cout << "here3\n";
 /*
   // do a validation of size  
   // if the incoming data has changed size, tell the encoder 如果视频尺寸有变化的时候
@@ -348,25 +358,51 @@ int H264EncoderContext::EncodeFrames(const u_char * src, unsigned & srcLen, u_ch
     cout << "avcodec_receive_packet failed\n";
     return 1;
 	}
+  
+/*
+  //如果输出的是关键帧，加IDR帧前添加SPS PPS后直接返回
   if(pkt->flags & AV_PKT_FLAG_KEY){
-      cout << "@-encode:"  << pkt->size <<"\n";//输出的是关键帧
-  }
-    for(int i=0;i<46;i++)
-      {
-          printf("%02x ",((u_char *)pkt->data)[i]);
+      //cout << "@-encode:"  << pkt->size <<"\n";//输出的是关键帧
+      av_new_packet(sps_pkt,_context->extradata_size);
+      memcpy(sps_pkt->data,_context->extradata,_context->extradata_size);
+      sps_pkt->flags=pkt->flags;
+      sps_pkt->size=_context->extradata_size;
+     
+      av_new_packet(sps_pkt,pkt->size+_context->extradata_size);
+      memcpy(sps_pkt->data,_context->extradata,_context->extradata_size);
+      memcpy(sps_pkt->data+_context->extradata_size,pkt->data,pkt->size);
+      sps_pkt->flags=pkt->flags;
+      sps_pkt->size=pkt->size+_context->extradata_size;
+      
+      int i;
+      for(i=0;i<48;i++){
+        printf("%02x",sps_pkt->data[i]);
       }
-    printf(" len=%d \n",pkt->size);
+      printf("\n");
+
+      
+      _txH264Frame->SetFromFrame(_context, sps_pkt);
+      _txH264Frame->SetTimestamp(srcRTP.GetTimestamp());
+     
+      if (_txH264Frame->HasRTPFrames())
+      {
+        _txH264Frame->GetRTPFrame(dstRTP, flags);
+        dstLen = dstRTP.GetFrameLen();
+        if (sps_pkt)  av_packet_free(&sps_pkt);
+        return 1;
+      }   
+  }
+*/ 
   _frameCounter++; 
   //cout << "encode:" << pkt->pts <<"  " << pkt->size <<"\n";
 
+ //cout << "here6\n";
 
-//  cout << "here6\n";
- 
   _txH264Frame->BeginNewFrame();
   _txH264Frame->SetFromFrame(_context, pkt);
   _txH264Frame->SetTimestamp(srcRTP.GetTimestamp());
   
-//  cout << "here7\n";
+  //cout << "here7\n";
 
   if (_txH264Frame->HasRTPFrames())
   {
@@ -461,8 +497,8 @@ H264DecoderContext::~H264DecoderContext()
  if (_rxH264Frame) delete _rxH264Frame;
   //by aphero
   
-  if (img_convert_ctx !=NULL) sws_freeContext(img_convert_ctx);
-  if (out_buffer != NULL) av_free(out_buffer);
+  //if (img_convert_ctx !=NULL) sws_freeContext(img_convert_ctx);
+  //if (out_buffer != NULL) av_free(out_buffer);
   //if (pFrameYUV != NULL) av_free(pFrameYUV);
   //by aphero end
   

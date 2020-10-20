@@ -643,10 +643,10 @@ S["LIBVPX_LDFLAGS"]="-L/usr/local/lib -lavcodec -lavutil"
 S["LIBVPX_CPPFLAGS"]="-DFFMPEG_DECODER=1 -I/usr/local/include"
 S["LIBAV_LDFLAGS"]="-L/usr/local/lib"
 S["LIBAV_CPPFLAGS"]="-I/usr/local/include"
-S["PLUGIN_DIRS"]=" /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264_123  /home/aphero/openmcu/plugi"\
-"ns/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugin"\
-"s/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLB"\
-"C  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS "
+S["PLUGIN_DIRS"]=" /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264  /home/aphero/openmcu/plugins/M"\
+"PEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G7"\
+"22.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /"\
+"home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS "
 S["COMPILE_PTLIB_NO_STATIC_FALSE"]="#"
 S["COMPILE_PTLIB_NO_STATIC_TRUE"]=""
 S["MCU_BUILDOPTS"]=""
@@ -685,7 +685,7 @@ S["USE_SRC_LIBG7221"]="1"
 S["PLUGIN_G722_DIR"]="/home/aphero/openmcu/plugins/G722"
 S["PLUGIN_VP8_DIR"]="/home/aphero/openmcu/plugins/VP8-WebM"
 S["PLUGIN_MPEG4_DIR"]="/home/aphero/openmcu/plugins/MPEG4"
-S["PLUGIN_H264_DIR"]="/home/aphero/openmcu/plugins/H.264_123"
+S["PLUGIN_H264_DIR"]="/home/aphero/openmcu/plugins/H.264"
 S["PLUGIN_H263_DIR"]="/home/aphero/openmcu/plugins/H.263-1998.3"
 S["PLUGIN_H261_DIR"]="/home/aphero/openmcu/plugins/H.261-vic"
 S["PLUGINS"]="h261 h263 h264 mpeg4 vp8 g722 g7221 g7222 g7231 g726 g729 ilbc silk opus"

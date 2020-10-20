@@ -49,6 +49,35 @@
 //#endif
 #define MAX_FRAME_SIZE 256 * 1024
 
+#define H264_START_CODE 0x000001
+uint32_t h264_find_next_start_code (uint8_t *pBuf, uint32_t bufLen)
+{
+  uint32_t val;
+  uint32_t offset;
+ 
+  offset = 0;
+  if (pBuf[0] == 0 && pBuf[1] == 0 && pBuf[2] == 0 && pBuf[3] == 1) {
+    pBuf += 4;
+    offset = 4;
+  } else if (pBuf[0] == 0 && pBuf[1] == 0 && pBuf[2] == 1) {
+    pBuf += 3;
+    offset = 3;
+  }
+  val = 0xffffffff;
+  while (offset < bufLen - 3) {
+    val <<= 8;
+    val |= *pBuf++;
+    offset++;
+    if (val == H264_START_CODE) {
+      return offset - 4;
+    }
+    if ((val & 0x00ffffff) == H264_START_CODE) {
+      return offset - 3;
+    }
+  }
+  return 0;
+}
+
 H264Frame::H264Frame ()
 {
   _timestamp = 0;
@@ -164,13 +193,51 @@ void H264Frame::SetFromFrame (AVCodecContext *Ctx, AVPacket *Pkt) {
   int currentNAL = 0;
   uint8_t* currentPositionInFrame=(uint8_t*) _encodedFrame;
   if (_NALs) free(_NALs);
-  _NALs = (h264_nal_t *)malloc(sizeof(h264_nal_t));
+  _NALs = (h264_nal_t *)malloc(3*sizeof(h264_nal_t));
 
   _encodedFrameLen = 0;
   _numberOfNALsInFrame = 0;
   _currentNAL=0;
+  int currentNALLen = 0;
+  uint32_t header = 0;
 
-    int currentNALLen = Pkt->size;//x264
+//添加关键帧前面添加sps和pps
+  if(Pkt->flags & AV_PKT_FLAG_KEY){
+    //cout << "@-encode:"  << Ctx->extradata_size <<"\n";
+    //复制sps到_NALs[0]
+    int sps_len = h264_find_next_start_code(Ctx->extradata,Ctx->extradata_size);
+    memcpy(currentPositionInFrame, Ctx->extradata,sps_len);//x264
+    _NALs[_numberOfNALsInFrame].length = sps_len;
+    _NALs[_numberOfNALsInFrame].offset = _encodedFrameLen;
+    _NALs[_numberOfNALsInFrame].type = H264_NAL_TYPE_SEQ_PARAM;//x264
+    if (IsStartCode(currentPositionInFrame))
+    {
+      header = currentPositionInFrame[2] == 1 ? 3 : 4;
+    }
+    _NALs[_numberOfNALsInFrame].length -= header;
+    _NALs[_numberOfNALsInFrame].offset += header;
+    _numberOfNALsInFrame++;
+    _encodedFrameLen += sps_len;
+    currentPositionInFrame += sps_len;
+
+    //复制pps到_NALs[1]
+    int pps_len = Ctx->extradata_size-sps_len;
+    memcpy(currentPositionInFrame, Ctx->extradata+sps_len,pps_len);//x264
+    _NALs[_numberOfNALsInFrame].length = pps_len;
+    _NALs[_numberOfNALsInFrame].offset = _encodedFrameLen;
+    _NALs[_numberOfNALsInFrame].type = H264_NAL_TYPE_PIC_PARAM;//x264
+    if (IsStartCode(currentPositionInFrame))
+    {
+      header = currentPositionInFrame[2] == 1 ? 3 : 4;
+    }
+    _NALs[_numberOfNALsInFrame].length -= header;
+    _NALs[_numberOfNALsInFrame].offset += header;
+    _numberOfNALsInFrame++;
+    _encodedFrameLen += pps_len;
+    currentPositionInFrame += pps_len;
+  }
+    //复制avpacket到_NALs[0]或_NALs[2]
+    currentNALLen = Pkt->size;//x264
     while(_encodedFrameLen + currentNALLen > _encodedFrameLenMax)
     {
      _encodedFrameLenMax += MAX_FRAME_SIZE;
@@ -184,7 +251,6 @@ void H264Frame::SetFromFrame (AVCodecContext *Ctx, AVPacket *Pkt) {
       _NALs[_numberOfNALsInFrame].length = currentNALLen;
       _NALs[_numberOfNALsInFrame].offset = _encodedFrameLen;
       _NALs[_numberOfNALsInFrame].type = Pkt->flags;//x264
-      uint32_t header = 0;
       if (IsStartCode(currentPositionInFrame))
       {
 	      header = currentPositionInFrame[2] == 1 ? 3 : 4;

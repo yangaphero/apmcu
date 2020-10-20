@@ -62,7 +62,7 @@ static const char RoomNameKey[]            = "Room";
 static const char DefaultRoomKey[]         = "Default room";
 
 static const char DefaultCallLogFilename[] = "mcu_log.txt"; 
-static const char DefaultRoom[]            = "room101";
+static const char DefaultRoom[]            = "1000";
 static const char AllowLoopbackCallsKey[]  = "Allow loopback calls";
 static const char AutoDialDelayKey[]       = "Auto dial delay";
 

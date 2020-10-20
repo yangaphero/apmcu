@@ -6896,7 +6896,7 @@ if test "${h263}" = "yes"; then
     PLUGIN_DIRS="$PLUGIN_DIRS ${PLUGIN_H263_DIR}"
 fi
 
-PLUGIN_H264_DIR=${top_srcdir}/plugins/H.264_123
+PLUGIN_H264_DIR=${top_srcdir}/plugins/H.264
 
 if test "${h264}" = "yes"; then
     USE_H264=0

@@ -3394,7 +3394,7 @@ void MCUH323Connection::SetRemoteName(const H323SignalPDU & pdu)
     remoteUserName = signallingChannel->GetRemoteAddress().GetHostName();
 
   // remoteDisplayName
-  remoteDisplayName = pdu.GetQ931().GetDisplayName();
+  //remoteDisplayName = pdu.GetQ931().GetDisplayName();
   if(remoteDisplayName == "" && pdu.m_h323_uu_pdu.m_h323_message_body.GetTag() == H225_H323_UU_PDU_h323_message_body::e_setup)
   {
     const H225_Setup_UUIE & setup = pdu.m_h323_uu_pdu.m_h323_message_body;

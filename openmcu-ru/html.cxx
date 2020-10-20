@@ -251,7 +251,7 @@ GeneralPConfigPage::GeneralPConfigPage(PHTTPServiceProcess & app,const PString &
   s << BoolField("RESTORE DEFAULTS", JsLocal("restore_defaults"), FALSE);
   // Language
   //s << SelectField("Language", JsLocal("language"), cfg.GetString("Language"), ",EN,FR,JP,PT,RU,UK");
-  s << SelectField("Language", "Select Language", cfg.GetString("Language"), ",EN,FR,JP,PT,RU,UK");
+  s << SelectField("Language", "Select Language", cfg.GetString("Language"), ",EN,ZH,FR,JP,PT,RU,UK");
   // MCU Server Id
   s << StringField(ServerIdKey, JsLocal("server_id"), OpenMCU::Current().GetServerId(), 250);
 

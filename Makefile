@@ -266,7 +266,7 @@ PACKAGE_URL =
 PACKAGE_VERSION = 4.0
 PATH_SEPARATOR = :
 PLUGINS = h261 h263 h264 mpeg4 vp8 g722 g7221 g7222 g7231 g726 g729 ilbc silk opus
-PLUGIN_DIRS =  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264_123  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS 
+PLUGIN_DIRS =  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS 
 PLUGIN_G7221_DIR = /home/aphero/openmcu/plugins/G722.1
 PLUGIN_G7222_DIR = /home/aphero/openmcu/plugins/G722.2
 PLUGIN_G722_DIR = /home/aphero/openmcu/plugins/G722
@@ -275,7 +275,7 @@ PLUGIN_G726_DIR = /home/aphero/openmcu/plugins/G726
 PLUGIN_G729_DIR = /home/aphero/openmcu/plugins/G729
 PLUGIN_H261_DIR = /home/aphero/openmcu/plugins/H.261-vic
 PLUGIN_H263_DIR = /home/aphero/openmcu/plugins/H.263-1998.3
-PLUGIN_H264_DIR = /home/aphero/openmcu/plugins/H.264_123
+PLUGIN_H264_DIR = /home/aphero/openmcu/plugins/H.264
 PLUGIN_ILBC_DIR = /home/aphero/openmcu/plugins/iLBC
 PLUGIN_INSTALLPREFIX = /opt/openmcu-ru/lib/ptlib
 PLUGIN_MPEG4_DIR = /home/aphero/openmcu/plugins/MPEG4
@@ -764,7 +764,7 @@ all:
 #	($(MAKE) $(MAKEFLAGS)     -C /home/aphero/openmcu/libs/opus) || exit $$?
 	($(MAKE) $(MAKEFLAGS)     -C /home/aphero/openmcu/libs/libg722_1) || exit $$?
 	($(MAKE) $(MAKEFLAGS)       -C openmcu-ru) || exit $$?
-	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264_123  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
+	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
 		do ($(MAKE) $(MAKEFLAGS) -C $$dir) || exit $$?; \
 	done )
 
@@ -772,7 +772,7 @@ all:
 
 install:
 	($(MAKE) install -C openmcu-ru) || exit $$?
-	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264_123  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
+	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
 		do ($(MAKE) install -C $$dir) || exit $$?; \
 	done )
 	install -m 644 /home/aphero/openmcu/libs/ptlib/lib/libpt_linux_x86_64_r.so.2.0.1 $(DESTDIR)/opt/openmcu-ru/lib
@@ -788,7 +788,7 @@ install:
 
 uninstall:
 	($(MAKE) uninstall -C openmcu-ru) || exit $$?
-	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264_123  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
+	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
 		do ($(MAKE) uninstall -C $$dir) || exit $$?; \
 	done )
 	rm -f $(DESTDIR)/opt/openmcu-ru/lib/libpt_linux_x86_64_r.so.2.0.1
@@ -812,7 +812,7 @@ clean:
 	($(MAKE) clean -C /home/aphero/openmcu/libs/ptlib) || exit $$?
 	($(MAKE) clean -C /home/aphero/openmcu/libs/h323plus) || exit $$?
 	($(MAKE) clean -C openmcu-ru) || exit $$?
-	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264_123  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
+	( for dir in  /home/aphero/openmcu/plugins/H.261-vic /home/aphero/openmcu/plugins/H.263-1998.3 /home/aphero/openmcu/plugins/H.264  /home/aphero/openmcu/plugins/MPEG4  /home/aphero/openmcu/plugins/VP8-WebM  /home/aphero/openmcu/plugins/G722  /home/aphero/openmcu/plugins/G722.1  /home/aphero/openmcu/plugins/G722.2  /home/aphero/openmcu/plugins/G7231  /home/aphero/openmcu/plugins/G726  /home/aphero/openmcu/plugins/G729  /home/aphero/openmcu/plugins/iLBC  /home/aphero/openmcu/plugins/SILK_B40  /home/aphero/openmcu/plugins/Speex  /home/aphero/openmcu/plugins/OPUS ; \
 		do ($(MAKE) clean -C $$dir) || exit $$?; \
 	done )
 

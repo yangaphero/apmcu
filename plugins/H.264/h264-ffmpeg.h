@@ -131,6 +131,8 @@ class H264EncoderContext
     int _frameCounter;
     AVFrame  *pict = NULL;
     AVPacket *pkt = NULL;
+    AVPacket *sps_pkt = NULL;
+    AVPacket *pps_pkt = NULL;
 };
 
 class H264DecoderContext
@@ -153,6 +155,7 @@ class H264DecoderContext
     AVCodecContext* _context;
     AVFrame* _outputFrame;
     AVPacket _pkt;
+
     H264Frame* _rxH264Frame;
 
     //by aphero 添加色彩转换
