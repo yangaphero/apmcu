@@ -339,7 +339,6 @@ int X264EncoderContext::EncodeFrames(const unsigned char * src, unsigned & srcLe
 //    cout << "Empty\n";
   }
 //  cout << "frame type " << _inputFrame.i_type << "\n";
-cout  << "numberOfNALs: "<< numberOfNALs <<"\n";
 //    cout << "Enc1\n";
 
 //  cout << "here7\n";

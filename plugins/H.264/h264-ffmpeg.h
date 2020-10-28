@@ -439,6 +439,17 @@ static unsigned int   H264_MaxBitRate      = 0; // set this using option "Max Bi
 static unsigned int   H264_VideoType       = PluginCodec_MediaTypeVideo;
 DECLARE_GENERIC_OPTIONS(H264)
 
+static const char     H264HW_Desc[]          = { "H.264HW" };
+static const char     H264HW_MediaFmt[]      = { "H.264HW" };
+static unsigned int   H264HW_FrameHeight     = CIF_HEIGHT;
+static unsigned int   H264HW_FrameWidth      = CIF_WIDTH;
+static unsigned int   H264HW_Profile         = H264_PROFILE_BASE;
+static unsigned int   H264HW_Level           = H264_LEVEL12;
+static unsigned int   H264HW_MaxBitRate      = 0; // set this using option "Max Bit Rate"
+static unsigned int   H264HW_VideoType       = PluginCodec_MediaTypeVideo;
+DECLARE_GENERIC_OPTIONS(H264HW)
+
+
 static const char     H264SQCIF_Desc[]          = { "H.264-SQCIF" };
 static const char     H264SQCIF_MediaFmt[]      = { "H.264-SQCIF" };                             
 static unsigned int   H264SQCIF_FrameHeight     = SQCIF_HEIGHT;               
@@ -559,13 +570,15 @@ static unsigned int   H264FHD_MaxBitRate      = H264_LEVEL40_MBPS;
 static unsigned int   H264FHD_VideoType       = PluginCodec_MediaTypeVideo;
 DECLARE_GENERIC_OPTIONS(H264FHD)
 
+
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
 
 static struct PluginCodec_Definition h264CodecDefn[] = {
 #ifdef H323_H264_TEST
-  DECLARE_H323PARAM(H264),
+//  DECLARE_H323PARAM(H264),
+  DECLARE_H323PARAM(H264HW),
 //  DECLARE_H323PARAM(H264SQCIF),
 //  DECLARE_H323PARAM(H264QCIF),
 //  DECLARE_H323PARAM(H264QCIF2),

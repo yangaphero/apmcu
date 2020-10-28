@@ -539,7 +539,7 @@ class MCUConnection_ConferenceMember : public ConferenceMember
 
     virtual void OnReceivedUserInputIndication(const PString & str)
     {
-      PTRACE(2, "h323.cxx\tFCWL from OnReceivedUserInputIndication:" << callToken);
+      MCUTRACE(2, "h323.cxx\tFCWL from OnReceivedUserInputIndication:" << callToken);
       MCUH323Connection * conn = ep.FindConnectionWithLock(callToken);
       if (conn != NULL)
       {

@@ -160,7 +160,7 @@ BOOL MCURtspConnection::Connect(PString room, PString address)
 
   // display name
   remoteDisplayName = GetEndpointParam(DisplayNameKey, url.GetPathStr());
-
+  //videoReceiveCodecName = GetEndpointParam(VideoCodecKey);//by aphero
   // auth
   auth.username = GetEndpointParam(UserNameKey, url.GetUserName());
   auth.password = GetEndpointParam(PasswordKey, url.GetPassword());
@@ -616,6 +616,7 @@ BOOL MCURtspConnection::OnRequestDescribe(const msg_t *msg)
     SipCapability *sc = FindSipCap(RemoteSipCaps, MEDIA_TYPE_VIDEO, vcap);
     if(sc)
     {
+      if(sc->format == "h264hw") sc->format.Replace("hw","",TRUE,0);//by aphero
       snprintf(buffer_sdp + strlen(buffer_sdp), 1024,
            "m=video 0 RTP/AVP %d\r\n"
            "b=AS:%d\r\n"

@@ -42,7 +42,7 @@ void BeginPage (PStringStream &html, PString ptitle, PString title, PString quot
     else html_template_size = -1; // read error indicator
   }
   if(html_template_size <= 0)
-  { cout << "Can't load HTML template!\n"; PTRACE(1,"WebCtrl\tCan't read HTML template from file"); return; }
+  { cout << "Can't load HTML template!\n"; MCUTRACE(1,"WebCtrl\tCan't read HTML template from file"); return; }
 
   PString lang = MCUConfig("Parameters").GetString("Language", "").ToLower();
 
@@ -178,11 +178,13 @@ BOOL DefaultPConfigPage::Post(PHTTPRequest & request, const PStringToString & da
     PHTTPField & field = fields[fld];
     if (&field == keyField) {
       PString key = field.GetValue();
-      if (!key)
+      if (!key){
         cfg.SetString(key, valField->GetValue());
+      }
     }
     else if (&field != valField && &field != sectionField)
       field.SaveToConfig(cfg);
+      
   }
 
   // Find out which fields have been removed (arrays elements deleted)
@@ -767,6 +769,23 @@ ExportPConfigPage::ExportPConfigPage(PHTTPServiceProcess & app,const PString & t
 // remove it when not needed
 void VideoResolutionRestore(PString & capname, PString & res)
 {
+    if(capname.Find("H.264HW")==0)
+  {
+    for(int i = 0; h264_profile_levels[i].level != 0; ++i)
+    {
+      if(capname != PString(h264_profile_levels[i].capname)+"{sw}")
+        continue;
+      unsigned macroblocks = h264_profile_levels[i].max_fs;
+      for(int j = 0; h264_resolutions[j].macroblocks != 0; ++j)
+      {
+        if(macroblocks < h264_resolutions[j].macroblocks)
+          continue;
+        res = PString(h264_resolutions[j].width)+"x"+PString(h264_resolutions[j].height);
+        capname = "H.264HW{sw}";
+        return;
+      }
+    }
+  }
   if(capname.Find("H.264")==0)
   {
     for(int i = 0; h264_profile_levels[i].level != 0; ++i)
@@ -784,6 +803,7 @@ void VideoResolutionRestore(PString & capname, PString & res)
       }
     }
   }
+
   else if(capname.Find("H.261")==0 || capname.Find("H.263")==0)
   {
     PString name = capname;
@@ -907,6 +927,7 @@ H323EndpointsPConfigPage::H323EndpointsPConfigPage(PHTTPServiceProcess & app,con
       scfg.SetString("Audio codec(transmit)", params[10]);
       scfg.SetString("Video codec(transmit)", params[11]);
       sect.AppendString(sectionPrefix+account);
+      
     }
   }
   //
@@ -1070,10 +1091,12 @@ RtspEndpointsPConfigPage::RtspEndpointsPConfigPage(PHTTPServiceProcess & app,con
   s << ColumnItem(JsLocal("name_user"));
   s << ColumnItem(JsLocal("name_password"));
   s << ColumnItem(JsLocal("name_display_name"));
+  s << ColumnItem(JsLocal("name_codec")); //by aphero 编码选项 表格头部
 
   optionNames.AppendString(UserNameKey);
   optionNames.AppendString(PasswordKey);
   optionNames.AppendString(DisplayNameKey);
+  optionNames.AppendString(VideoCodecKey);//by aphero 编码选项
 
   sectionPrefix = "RTSP Endpoint ";
   PStringList sect = cfg.GetSectionsPrefix(sectionPrefix);
@@ -1090,9 +1113,11 @@ RtspEndpointsPConfigPage::RtspEndpointsPConfigPage(PHTTPServiceProcess & app,con
     s << StringItem(name, scfg.GetString(UserNameKey), 120);
     s << StringItem(name, scfg.GetString(PasswordKey), 120);
     s << StringItem(name, scfg.GetString(DisplayNameKey), 120);
-
+    //by aphero 编码选项
+    s << JsLocal(VideoCodecKey)+SelectItem(name, scfg.GetString(VideoCodecKey, "H.264HW{sw}"), "H.264HW{sw},H.264{sw}");
   }
   s << EndTable();
+  s << "海康威视摄像头URL:rtsp://192.168.2.201:554/Streaming/Channels/101    admin admin  海康摄像头";
 
   BuildHTML("");
   BeginPage(html_begin, section, "window.l_param_rtsp_endpoints", "");
@@ -1788,6 +1813,7 @@ BOOL SectionPConfigPage::Post(PHTTPRequest & request,
   {
     PString key = list[i].Tokenise("=")[0];
     PString value = list[i].Tokenise("=")[1];
+
     if(key != "" && value != "")
       cfg.SetString(key, value);
   }
@@ -2118,7 +2144,7 @@ BOOL WelcomePage::OnPOST(PHTTPServer & server, const PURL & url, const PMIMEInfo
   if(f) written=fwrite((const void*)(((const char*)eb)+o), 1, (size_t)o2-o, f);
   fclose(f);
 
-  PTRACE(1,"HTML\tlogo." << extension << " " << written << " byte(s) re-written");
+  MCUTRACE(1,"HTML\tlogo." << extension << " " << written << " byte(s) re-written");
 
   { PStringStream message; PTime now; message
       << "HTTP/1.1 302 Found\r\n"
@@ -2331,7 +2357,7 @@ BOOL InvitePage::Post(PHTTPRequest & request,
   MCUH323EndPoint & ep = app.GetEndpoint();
   if(ep.Invite(room, address) == "")
   {
-    PTRACE(2,"Conference\tCould not invite " << address);
+    MCUTRACE(2,"Conference\tCould not invite " << address);
     BeginPage(html,"Invite failed","window.l_invite_f","window.l_info_invite_f");
     html << html_invite;
     EndPage(html,OpenMCU::Current().GetHtmlCopyright()); msg = html;
@@ -2375,7 +2401,10 @@ BOOL JpegFrameHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEInf
   long requestedMixer=0;
   if(data.Contains("mixer")) requestedMixer=data("mixer").AsInteger();
 
-  const unsigned long t1=(unsigned long)time(0);
+  unsigned long t1=(unsigned long)time(0);
+  struct timeval start; //by aphero
+  gettimeofday(&start,NULL); 
+  t1 = (int64_t)start.tv_sec*1000 + start.tv_usec/1000;
 
   // lock!
   PWaitAndSignal m(jpegMixerMutex);
@@ -2385,7 +2414,7 @@ BOOL JpegFrameHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEInf
   if(jpegMixer == NULL) // no mixer found
     return FALSE;
 
-  if(t1-(jpegMixer->jpegTime)>1) // artificial limitation to prevent overload: no more than 1 frame per second
+  if(t1-(jpegMixer->jpegTime)>100) // artificial limitation to prevent overload: no more than 1 frame per second
   {
     if(width<1||height<1||width>2048||height>2048) //suspicious, it's better to get size from layouts.conf
     {
@@ -2484,13 +2513,13 @@ InteractiveHTTP::InteractiveHTTP(OpenMCU & _app, PHTTPAuthority & auth)
 
 BOOL InteractiveHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEInfo & info, const PHTTPConnectionInfo & connectInfo)
 {
-  PTRACE(5,"WebCtrl\tComm flow init");
+  MCUTRACE(5,"WebCtrl\tComm flow init");
 
   PHTTPRequest * req = CreateRequest(url, info, connectInfo.GetMultipartFormInfo(), server); // check authorization
   if(!CheckAuthority(server, *req, connectInfo)) {delete req; return FALSE;}
   delete req;
 
-  PTRACE(5,"WebCtrl\tComm flow auth passed");
+  MCUTRACE(5,"WebCtrl\tComm flow auth passed");
 
   PString request=url.AsString();
   PINDEX q;
@@ -2520,17 +2549,17 @@ BOOL InteractiveHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEI
   server.Write((const char*)message,message.GetLength());
   server.flush();
 
-  PTRACE(5,"WebCtrl\tComm flow headers sent");
+  MCUTRACE(5,"WebCtrl\tComm flow headers sent");
 
   message="<html><body style='font-size:9px;font-family:Verdana,Arial;padding:0px;margin:1px;color:#000'><script>p=parent</script>\n";
   message << OpenMCU::Current().HttpStartEventReading(idx,room);
 
-//PTRACE(1,"!!!!!\tsha1('123')=" << PMessageDigestSHA1::Encode("123")); // sha1 works!! I'll try with websocket in future
+//MCUTRACE(1,"!!!!!\tsha1('123')=" << PMessageDigestSHA1::Encode("123")); // sha1 works!! I'll try with websocket in future
 
   ConferenceManager *cm = OpenMCU::Current().GetConferenceManager();
   MCUH323EndPoint & ep = OpenMCU::Current().GetEndpoint();
 
-  PTRACE(5,"WebCtrl\tComm flow find with lock");
+  MCUTRACE(5,"WebCtrl\tComm flow find with lock");
 
   Conference *conference = cm->FindConferenceWithLock(room);
   if(conference)
@@ -2546,7 +2575,7 @@ BOOL InteractiveHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEI
 
     // unlock conference
     conference->Unlock();
-    PTRACE(5,"WebCtrl\tComm flow found, unlocked");
+    MCUTRACE(5,"WebCtrl\tComm flow found, unlocked");
 
     message << "<script>p.splitdata=Array(";
     for (unsigned i=0;i<OpenMCU::vmcfg.vmconfs;i++)
@@ -2580,11 +2609,11 @@ BOOL InteractiveHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEI
     message << "<script>top.location.href='/';</script>\n";
     server.Write((const char*)message,message.GetLength());
     server.flush();
-    PTRACE(5,"WebCtrl\tComm flow not found, not locked, stopped");
+    MCUTRACE(5,"WebCtrl\tComm flow not found, not locked, stopped");
     return FALSE;
   }
 
-  PTRACE(5,"WebCtrl\tComm flow is ready");
+  MCUTRACE(5,"WebCtrl\tComm flow is ready");
 
   while(server.Write((const char*)message,message.GetLength()))
   {
@@ -2601,7 +2630,7 @@ BOOL InteractiveHTTP::OnGET (PHTTPServer & server, const PURL &url, const PMIMEI
   }
   return FALSE;
 
-  PTRACE(5,"WebCtrl\tComm flow stopped");
+  MCUTRACE(5,"WebCtrl\tComm flow stopped");
 }
 
 ///////////////////////////////////////////////////////////////
@@ -2905,11 +2934,11 @@ BOOL RecordsBrowserPage::OnGET (PHTTPServer & server, const PURL &url, const PMI
     { size_t blockSize = PMIN(65536, fileSize-p);
       result=fread(buffer, 1, blockSize, f);
       if(blockSize != result)
-      { PTRACE(1,"mcu.cxx\tFile read error: " << p << "/" << fileSize << ", filename: " << filePathStr);
+      { MCUTRACE(1,"mcu.cxx\tFile read error: " << p << "/" << fileSize << ", filename: " << filePathStr);
         break;
       }
       if(!server.Write((const char*)buffer, result))
-      { PTRACE(1,"mcu.cxx\tServer write error: " << p << "/" << fileSize << ", filename: " << filePathStr);
+      { MCUTRACE(1,"mcu.cxx\tServer write error: " << p << "/" << fileSize << ", filename: " << filePathStr);
         break;
       }
       server.flush();

@@ -107,7 +107,7 @@ $(OBJDIR)/%.o : %.cxx
 	@mkdir -p $(OBJDIR) >/dev/null 2>&1
 	$(CXX) $(EXTRACCFLAGS) $(STDCCFLAGS) $(OPTCCFLAGS) $(CFLAGS) -c $< -o $@
 
-PLUGIN	= ./$(BASENAME)_video_pwplugin.$(PLUGINEXT)
+PLUGIN	= ./$(BASENAME)HW_video_pwplugin.$(PLUGINEXT)
 STATIC	= ./lib$(BASENAME)_video_s.a
 
 OBJECTS = $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(patsubst %.cxx,%.o,$(notdir $(SRCS)))))

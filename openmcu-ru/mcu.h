@@ -311,9 +311,9 @@ class PluginLoaderStartup2 : public PProcessStartup
       for (r = keyList.begin(); r != keyList.end(); ++r) {
         PPluginModuleManager * mgr = PFactory<PPluginModuleManager>::CreateInstance(*r);
         if (mgr == NULL) {
-          PTRACE(1, "PLUGIN\tCannot create manager for plugins of type " << *r);
+          MCUTRACE(1, "PLUGIN\tCannot create manager for plugins of type " << *r);
         } else {
-          PTRACE(3, "PLUGIN\tCreated manager for plugins of type " << *r);
+          MCUTRACE(3, "PLUGIN\tCreated manager for plugins of type " << *r);
           managers.push_back(mgr);
         }
       }

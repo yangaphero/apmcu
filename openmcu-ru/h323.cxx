@@ -73,7 +73,7 @@ class MCUConnectionCleaner : public PThread
 
     void Main()
     {
-      PTRACE(2, "MCU Connection cleaner start " << callToken);
+      MCUTRACE(2, "MCU Connection cleaner start " << callToken);
       MCUConnectionList & connectionList = ep->GetConnectionList();
       MCUConnectionList & connectionDeleteList = ep->GetConnectionDeleteList();
       MCUConnectionList::shared_iterator r = connectionList.Find(callToken);
@@ -91,7 +91,7 @@ class MCUConnectionCleaner : public PThread
             connectionDeleteList.Erase(s);
         }
       }
-      PTRACE(2, "MCU Connection cleaner stop " << callToken);
+      MCUTRACE(2, "MCU Connection cleaner stop " << callToken);
     }
 
   protected:
@@ -103,7 +103,7 @@ class MCUConnectionCleaner : public PThread
 
 void H323CallThread::Main()
 {
-  PTRACE(3, "H225\tStarted call thread alias=" << alias << " address=" << address);
+  MCUTRACE(3, "H225\tStarted call thread alias=" << alias << " address=" << address);
   if(connection.Lock())
   {
     H323Connection::CallEndReason reason = connection.SendSignalSetup(alias, address);
@@ -234,7 +234,7 @@ void MCUH323EndPoint::Initialise(PConfig & cfg)
   } else {
     masqAddressPtr = new PIPSocket::Address(nat_ip);
     behind_masq = TRUE;
-    PTRACE(2, trace_section << "Masquerading as address " << *(masqAddressPtr));
+    MCUTRACE(2, trace_section << "Masquerading as address " << *(masqAddressPtr));
   }
 
   nat_lag_ip = cfg.GetString(NATTreatAsGlobalKey);
@@ -373,13 +373,13 @@ BOOL MCUH323EndPoint::HasConnection(const PString & token)
 
 H323Connection * MCUH323EndPoint::InternalMakeCall(const PString & trasferFromToken, const PString & callIdentity, unsigned capabilityLevel, const PString & remoteParty, H323Transport * transport, PString & newToken, void * userData)
 {
-  PTRACE(2, trace_section << "Making call to: " << remoteParty);
+  MCUTRACE(2, trace_section << "Making call to: " << remoteParty);
 
   PString alias;
   H323TransportAddress address;
   if(!ParsePartyName(remoteParty, alias, address))
   {
-    PTRACE(2, trace_section << "Could not parse \"" << remoteParty << '"');
+    MCUTRACE(2, trace_section << "Could not parse \"" << remoteParty << '"');
     return NULL;
   }
 
@@ -391,7 +391,7 @@ H323Connection * MCUH323EndPoint::InternalMakeCall(const PString & trasferFromTo
       transport = address.CreateTransport(*this);
     if(transport == NULL)
     {
-      PTRACE(2, trace_section << "Invalid transport in \"" << remoteParty << '"');
+      MCUTRACE(2, trace_section << "Invalid transport in \"" << remoteParty << '"');
       return NULL;
     }
   }
@@ -399,7 +399,7 @@ H323Connection * MCUH323EndPoint::InternalMakeCall(const PString & trasferFromTo
   // remove the previous call
   if(!newToken.IsEmpty())
   {
-    PTRACE(3, trace_section << "Clear call " << newToken);
+    MCUTRACE(3, trace_section << "Clear call " << newToken);
     ClearCall(newToken);
   }
 
@@ -411,12 +411,12 @@ H323Connection * MCUH323EndPoint::InternalMakeCall(const PString & trasferFromTo
       lastReference = Q931::GenerateCallReference();
       newToken = BuildConnectionToken(*transport, lastReference, FALSE);
     } while (connectionsActive.Contains(newToken));
-    PTRACE(3, trace_section << "Build new connection token " << newToken);
+    MCUTRACE(3, trace_section << "Build new connection token " << newToken);
 
     connection = CreateConnection(lastReference, userData, transport, NULL);
     if(connection == NULL)
     {
-      PTRACE(2, trace_section << "CreateConnection returned NULL");
+      MCUTRACE(2, trace_section << "CreateConnection returned NULL");
       return NULL;
     }
     connection->Lock();
@@ -435,7 +435,7 @@ H323Connection * MCUH323EndPoint::InternalMakeCall(const PString & trasferFromTo
   }
 #endif
 
-  PTRACE(3, trace_section << "Created new connection: " << newToken << " address=" << address);
+  MCUTRACE(3, trace_section << "Created new connection: " << newToken << " address=" << address);
   new H323CallThread(*this, *connection, *transport, alias, address);
   return connection;
 }
@@ -461,7 +461,7 @@ BOOL MCUH323EndPoint::ClearCallSynchronous(const PString & callToken, H323Connec
   // H.323 cleaner thread
   if(PThread::Current() == (PThread *)connectionsCleaner)
   {
-    PTRACE(2, trace_section << "Found H.323 cleaner thread " << callToken << ", redirection to H323EndPoint");
+    MCUTRACE(2, trace_section << "Found H.323 cleaner thread " << callToken << ", redirection to H323EndPoint");
     return H323EndPoint::ClearCallSynchronous(callToken, reason, sync);
   }
 
@@ -472,7 +472,7 @@ BOOL MCUH323EndPoint::ClearCallSynchronous(const PString & callToken, H323Connec
     connection = *it;
     if(!connection->SetClearing())
     {
-      PTRACE(2, trace_section << "Cleaner process already running " << callToken << " thread " << PThread::Current()->GetThreadName());
+      MCUTRACE(2, trace_section << "Cleaner process already running " << callToken << " thread " << PThread::Current()->GetThreadName());
       return TRUE;
     }
   }
@@ -483,11 +483,11 @@ BOOL MCUH323EndPoint::ClearCallSynchronous(const PString & callToken, H323Connec
     if(connectionsActive.GetAt(callToken) == NULL)
       return FALSE;
     // Перенаправить в h323plus
-    PTRACE(2, trace_section << "Unknown connection " << callToken << ", redirection to H323EndPoint");
+    MCUTRACE(2, trace_section << "Unknown connection " << callToken << ", redirection to H323EndPoint");
     return H323EndPoint::ClearCallSynchronous(callToken, reason, sync);
   }
 
-  PTRACE(2, trace_section << "Clearing connection " << callToken << " reason=" << reason << " thread " << PThread::Current()->GetThreadName());
+  MCUTRACE(2, trace_section << "Clearing connection " << callToken << " reason=" << reason << " thread " << PThread::Current()->GetThreadName());
 
   connection->SetCallEndReason(reason, sync);
 
@@ -544,14 +544,14 @@ BOOL MCUH323EndPoint::OnConnectionCreated(MCUH323Connection * conn)
     if(it.GetObject() == conn)
       return TRUE;
     // Удалить
-    PTRACE(2, trace_section << "Error !");
+    MCUTRACE(2, trace_section << "Error !");
     PString fakeToken = PGloballyUniqueID().AsString();
     connectionList.Insert(conn, (long)conn, fakeToken);
     ClearCall(fakeToken);
     return FALSE;
   }
 
-  PTRACE(2, trace_section << "Insert connection " << conn->GetCallToken());
+  MCUTRACE(2, trace_section << "Insert connection " << conn->GetCallToken());
   connectionList.Insert(conn, (long)conn, conn->GetCallToken());
 
   Registrar *registrar = OpenMCU::Current().GetRegistrar();
@@ -584,7 +584,7 @@ void MCUH323EndPoint::OnConnectionCleared(H323Connection & connection, const PSt
 
 void MCUH323EndPoint::CleanUpConnections()
 {
-  PTRACE(3, trace_section << "CleanUpConnections");
+  MCUTRACE(3, trace_section << "CleanUpConnections");
   return H323EndPoint::CleanUpConnections();
 }
 
@@ -612,7 +612,7 @@ void MCUH323EndPoint::InitialiseCapability()
   // Setup capabilities
   if(capabilities.GetSize() == 0)
   {
-    PTRACE(3, trace_section << "Add all capabilities");
+    MCUTRACE(3, trace_section << "Add all capabilities");
     H323CapabilityFactory::KeyList_T stdCaps = H323CapabilityFactory::GetKeyList();
     for(H323CapabilityFactory::KeyList_T::const_iterator r = stdCaps.begin(); r != stdCaps.end(); ++r)
     {
@@ -750,7 +750,7 @@ void MCUH323EndPoint::InitialiseCapability()
   AddCapabilitiesMCU();
   cout << capabilities;
 
-  PTRACE(2, trace_section << "Codecs (in preference order):\n" << setprecision(2) << GetCapabilities());;
+  MCUTRACE(2, trace_section << "Codecs (in preference order):\n" << setprecision(2) << GetCapabilities());;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -782,6 +782,23 @@ void MCUH323EndPoint::AddCapabilitiesMCU()
       wf.SetOptionInteger("Generic Parameter 42", h264_profile_levels[i].level_h241);
       wf.SetOptionInteger(OPTION_MAX_BIT_RATE, h264_profile_levels[i].max_br);
       AddCapability(new_cap);
+      MCUTRACE(0, trace_section << "[aphero]h264_profile_levels:"<< i <<" "<< h264_profile_levels[i].level_h241);
+    }
+  }
+
+    // add H.264HW by aphero
+  if(CheckCapability("H.264HW{sw}"))
+  {
+    for(int i = 0; h264_profile_levels[i].level != 0; ++i)
+    {
+      if(h264_profile_levels[i].level_h241 == 29) // skip default capability
+        continue;
+      MCUCapability *new_cap = MCUCapability::Create("H.264HW{sw}");
+      OpalMediaFormat & wf = new_cap->GetWritableMediaFormat();
+      wf.SetOptionInteger("Generic Parameter 42", h264_profile_levels[i].level_h241);
+      wf.SetOptionInteger(OPTION_MAX_BIT_RATE, h264_profile_levels[i].max_br);
+      AddCapability(new_cap);
+      MCUTRACE(0, trace_section << "[aphero]h264_profile_levels:"<< i <<" "<< h264_profile_levels[i].level_h241);
     }
   }
   // add H.263p capabilities for H.323
@@ -878,13 +895,13 @@ void MCUH323EndPoint::TranslateTCPAddress(PIPSocket::Address &localAddr, const P
      ||((byte1==169)&&(byte2==254))      // APIPA/IPAC/zeroconf (probably LAN)
     );
     if(!local_mcu){
-      PTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": n/a (src is global)");
+      MCUTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": n/a (src is global)");
       return;
     }
 
     if(!nat_lag_ip.IsEmpty())
     if(nat_lag_ip.Find(","+remoteAddr.AsString()+",")!=P_MAX_INDEX)
-    { PTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": ***change to " << *(this->masqAddressPtr) << " (treating as global)");
+    { MCUTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": ***change to " << *(this->masqAddressPtr) << " (treating as global)");
       localAddr=*(this->masqAddressPtr);
       return;
     }
@@ -895,13 +912,13 @@ void MCUH323EndPoint::TranslateTCPAddress(PIPSocket::Address &localAddr, const P
      ||((byte1==172)&&((byte2&240)==16)) // LAN class B
      ||((byte1==192)&&(byte2==168))      // LAN class C
      ||((byte1==169)&&(byte2==254))      // APIPA/IPAC/zeroconf (probably LAN)
-    ) { PTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": n/a (dest. is LAN)"); }
+    ) { MCUTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": n/a (dest. is LAN)"); }
     else
-    { PTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": ***change to " << *(this->masqAddressPtr));
+    { MCUTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": ***change to " << *(this->masqAddressPtr));
       localAddr=*(this->masqAddressPtr);
     }
   } else
-  { PTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": n/a (NAT IP not set)"); }
+  { MCUTRACE(3, trace_section << "NAT remIP=" << remoteAddr << ", locIP=" << localAddr << ": n/a (NAT IP not set)"); }
   return;
 }
 
@@ -1595,7 +1612,7 @@ PString MCUH323EndPoint::SetRoomParams(const PStringToString & data)
 
   if(data.Contains("refresh")) // JavaScript data refreshing
   {
-    PTRACE(6,"WebCtrl\tJS refresh");
+    MCUTRACE(6,"WebCtrl\tJS refresh");
     Conference *conference = conferenceManager.FindConferenceWithLock(room);
     if(conference == NULL)
       return "";
@@ -1606,7 +1623,7 @@ PString MCUH323EndPoint::SetRoomParams(const PStringToString & data)
   }
 
   OpenMCU::Current().HttpWriteEventRoom("MCU Operator connected",room);
-  PTRACE(6,"WebCtrl\tOperator connected");
+  MCUTRACE(6,"WebCtrl\tOperator connected");
 
   Conference *conference = conferenceManager.FindConferenceWithLock(room);
   if(conference == NULL)
@@ -1770,7 +1787,7 @@ PString MCUH323EndPoint::Invite(PString room, PString memberName)
   }
 
   end:
-    PTRACE(2, trace_section << msg);
+    MCUTRACE(2, trace_section << msg);
 //    OpenMCU::Current().HttpWriteEventRoom(msg, room);
     return callToken;
 }
@@ -1805,7 +1822,7 @@ PString MCUH323EndPoint::IncomingConferenceRequest(H323Connection & connection,
 
   // check the conference ID
   if (conferenceManager.HasConference(conferenceID, roomToJoin)) {
-    PTRACE(3, trace_section << "Using conference ID to join existing room " << roomToJoin);
+    MCUTRACE(3, trace_section << "Using conference ID to join existing room " << roomToJoin);
     videoMixerNumber = 0;
     return roomToJoin;
   }
@@ -1826,7 +1843,7 @@ PString MCUH323EndPoint::IncomingConferenceRequest(H323Connection & connection,
             videoMixerNumber = mixer;
     } } } }
     if (conferenceManager.HasConference(roomToJoin)) {
-      PTRACE(3, trace_section << "Joining room specified by destination address " << roomToJoin);
+      MCUTRACE(3, trace_section << "Joining room specified by destination address " << roomToJoin);
       return roomToJoin;
     }
   }
@@ -1849,7 +1866,7 @@ PString MCUH323EndPoint::IncomingConferenceRequest(H323Connection & connection,
             videoMixerNumber = mixer;
     } } } }
     if (conferenceManager.HasConference(roomToJoin)) {
-      PTRACE(3, trace_section << "Joining room specified by Q.931 called party " << roomToJoin);
+      MCUTRACE(3, trace_section << "Joining room specified by Q.931 called party " << roomToJoin);
       return roomToJoin;
     }
   }
@@ -1859,12 +1876,12 @@ PString MCUH323EndPoint::IncomingConferenceRequest(H323Connection & connection,
     roomToJoin = OpenMCU::Current().GetDefaultRoomName();
 
   if (!roomToJoin.IsEmpty()) {
-    PTRACE(3, trace_section << "Joining default room " << roomToJoin);
+    MCUTRACE(3, trace_section << "Joining default room " << roomToJoin);
     videoMixerNumber = 0;
     return roomToJoin;
   }
 
-  PTRACE(3, trace_section << "Refusing call because no room specified, and no default room");
+  MCUTRACE(3, trace_section << "Refusing call because no room specified, and no default room");
   return PString::Empty();
 }
 
@@ -2030,7 +2047,7 @@ void MCUH323Connection::SetCallEndReason(CallEndReason reason, PSyncPoint * sync
   }
   else
   {
-    PTRACE(3, trace_section << "Call end reason for " << callToken << " set to " << reason);
+    MCUTRACE(3, trace_section << "Call end reason for " << callToken << " set to " << reason);
     callEndReason = reason;
     callEndTime = PTime();
   }
@@ -2064,7 +2081,7 @@ BOOL MCUH323Connection::ClearCall(H323Connection::CallEndReason reason)
 
 void MCUH323Connection::CleanUpOnCallEnd()
 {
-  PTRACE(2, trace_section << "CleanUpOnCallEnd");
+  MCUTRACE(2, trace_section << "CleanUpOnCallEnd");
   H323Connection::CleanUpOnCallEnd();
 }
 
@@ -2072,7 +2089,7 @@ void MCUH323Connection::CleanUpOnCallEnd()
 
 void MCUH323Connection::OnCleared()
 {
-  PTRACE(2, trace_section << "OnCleared");
+  MCUTRACE(2, trace_section << "OnCleared");
 
   LogCall();
 
@@ -2106,7 +2123,7 @@ void MCUH323Connection::SetRequestedRoom()
 
 void MCUH323Connection::JoinConference(const PString & roomToJoin)
 {
-  PTRACE(2, trace_section << "Join conference: " << roomToJoin << " memberName: " << memberName);
+  MCUTRACE(2, trace_section << "Join conference: " << roomToJoin << " memberName: " << memberName);
 
   PWaitAndSignal m(connMutex);
 
@@ -2272,7 +2289,7 @@ void MCUH323Connection::SelectDefaultLogicalChannel(unsigned sessionID)
     H323Capability * remoteCapability = SelectRemoteCapability(remoteCapabilities, sessionID, ep.tvCaps);
     if(remoteCapability == NULL)
       return;
-    PTRACE(2, trace_section << "OpenLogicalChannel " << *remoteCapability);
+    MCUTRACE(2, trace_section << "OpenLogicalChannel " << *remoteCapability);
     OpenLogicalChannel(*remoteCapability, sessionID, H323Channel::IsTransmitter);
     return;
   }
@@ -2281,7 +2298,7 @@ void MCUH323Connection::SelectDefaultLogicalChannel(unsigned sessionID)
     H323Capability * remoteCapability = SelectRemoteCapability(remoteCapabilities, sessionID, ep.tsCaps);
     if(remoteCapability == NULL)
       return;
-    PTRACE(2, trace_section << "OpenLogicalChannel " << *remoteCapability);
+    MCUTRACE(2, trace_section << "OpenLogicalChannel " << *remoteCapability);
     OpenLogicalChannel(*remoteCapability, sessionID, H323Channel::IsTransmitter);
     return;
   }
@@ -2295,11 +2312,11 @@ void MCUH323Connection::SelectDefaultLogicalChannel(unsigned sessionID)
       H323Capability * remoteCapability = remoteCapabilities.FindCapability(capability);
       if(remoteCapability != NULL)
       {
-        PTRACE(3, trace_section << "Selecting " << *remoteCapability);
+        MCUTRACE(3, trace_section << "Selecting " << *remoteCapability);
         MergeCapabilities(sessionID, capability, remoteCapability);
         if(OpenLogicalChannel(*remoteCapability, sessionID, H323Channel::IsTransmitter))
           break;
-        PTRACE(2, trace_section << "OnSelectLogicalChannels, OpenLogicalChannel failed: " << *remoteCapability);
+        MCUTRACE(2, trace_section << "OnSelectLogicalChannels, OpenLogicalChannel failed: " << *remoteCapability);
       }
     }
   }
@@ -2325,7 +2342,7 @@ H323Capability * MCUH323Connection::SelectRemoteCapability(H323Capabilities & ca
 
 void MCUH323Connection::OnSetLocalCapabilities()
 {
-  PTRACE(2, trace_section << "OnSetLocalCapabilities");
+  MCUTRACE(2, trace_section << "OnSetLocalCapabilities");
   PString audio_cap = GetEndpointParam("Audio codec(receive)");
   if(audio_cap.Left(5) == "G.711" && audio_cap.Right(4) == "{sw}") { audio_cap.Replace("{sw}","",TRUE,0); }
   PString video_cap = GetEndpointParam("Video codec(receive)", false);
@@ -2626,7 +2643,7 @@ H323Connection::AnswerCallResponse MCUH323Connection::OnAnswerCall(const PString
 
 void MCUH323Connection::InternalEstablishedConnectionCheck()
 {
-  PTRACE(3, trace_section << "connection state " << connectionState);
+  MCUTRACE(3, trace_section << "connection state " << connectionState);
   if(!conferenceMember && connectionState == HasExecutedSignalConnect)
   {
     // join conference
@@ -2666,7 +2683,7 @@ BOOL MCUH323Connection::CheckVFU()
       // only show warning if the number of received VFU requests(vfuCount) for a certain interval(vfuInterval) more than vfuLimit
       PString username = MCUURL(memberName).GetUrl();
       PString event = "too many VFU from \""+username+"\", limit "+PString(vfuLimit)+"/"+PString(vfuInterval)+", received "+PString(vfuCount);
-      PTRACE(6, trace_section << "RTP " << event);
+      MCUTRACE(6, trace_section << "RTP " << event);
       OpenMCU::Current().HttpWriteEventRoom("<font color=red>"+event+"</font>", requestedRoom);
     }
     vfuBeginTime = now;
@@ -2968,7 +2985,7 @@ BOOL MCUH323Connection::OpenVideoChannel(BOOL isEncoding, H323VideoCodec & codec
       videoGrabber = new MCUPVideoInputDevice(*this);
       if(videoGrabber == NULL)
       {
-        PTRACE(3, trace_section << "Cannot create MCU video input driver");
+        MCUTRACE(3, trace_section << "Cannot create MCU video input driver");
         return FALSE;
       }
 
@@ -3093,42 +3110,42 @@ void MCUH323Connection::RestartGrabber()
 
 BOOL MCUH323Connection::InitGrabber(PVideoInputDevice * grabber, int newFrameWidth, int newFrameHeight, int newFrameRate)
 {
-  PTRACE(4, trace_section << "Video grabber set to " << newFrameWidth << "x" << newFrameHeight);
+  MCUTRACE(4, trace_section << "Video grabber set to " << newFrameWidth << "x" << newFrameHeight);
 
   //if (!(pfdColourFormat.IsEmpty()))
   //  grabber->SetPreferredColourFormat(pfdColourFormat);
 
   if (!grabber->Open("", FALSE)) {
-    PTRACE(3, trace_section << "Failed to open the video input device");
+    MCUTRACE(3, trace_section << "Failed to open the video input device");
     return FALSE;
   }
 
   //if (!grabber->SetChannel(ep.GetVideoPlayMode())) {
-  //  PTRACE(3, "Failed to set channel to " << ep.GetVideoPlayMode());
+  //  MCUTRACE(3, "Failed to set channel to " << ep.GetVideoPlayMode());
   //  return FALSE;
   //}
 
   //if (!grabber->SetVideoFormat(
   //    ep.GetVideoIsPal() ? PVideoDevice::PAL : PVideoDevice::NTSC)) {
-  //  PTRACE(3, "Failed to set format to " << (ep.GetVideoIsPal() ? "PAL" : "NTSC"));
+  //  MCUTRACE(3, "Failed to set format to " << (ep.GetVideoIsPal() ? "PAL" : "NTSC"));
   //  return FALSE;
   //}
 
   if (!grabber->SetColourFormatConverter("YUV420P") ) {
-    PTRACE(3, trace_section << "Failed to set format to yuv420p");
+    MCUTRACE(3, trace_section << "Failed to set format to yuv420p");
     return FALSE;
   }
 
 
   if (newFrameRate != 0) {
     if (!grabber->SetFrameRate(newFrameRate)) {
-      PTRACE(3, trace_section << "Failed to set framerate to " << newFrameRate);
+      MCUTRACE(3, trace_section << "Failed to set framerate to " << newFrameRate);
       return FALSE;
     }
   }
 
   if (!grabber->SetFrameSizeConverter(newFrameWidth,newFrameHeight,FALSE)) {
-    PTRACE(3, trace_section << "Failed to set frame size to " << newFrameWidth << "x" << newFrameHeight);
+    MCUTRACE(3, trace_section << "Failed to set frame size to " << newFrameWidth << "x" << newFrameHeight);
     return FALSE;
   }
 
@@ -3255,7 +3272,7 @@ void MCUH323Connection::ChangeWelcomeState(int newState)
 
   if(welcomeState != newState)
   {
-    PTRACE(4, trace_section << "Entering welcome state " << newState);
+    MCUTRACE(4, trace_section << "Entering welcome state " << newState);
     welcomeState = newState;
     wavePlayingInSameState = FALSE;
     OnWelcomeStateChanged();
@@ -3273,11 +3290,11 @@ void MCUH323Connection::PlayWelcomeFile(BOOL useTheFile, PFilePath & fileToPlay)
   if(useTheFile) {
     if(playFile.Open(fileToPlay, PFile::ReadOnly))
     {
-      PTRACE(4, trace_section << "Playing welcome procedure file " << fileToPlay);
+      MCUTRACE(4, trace_section << "Playing welcome procedure file " << fileToPlay);
       return;
     }
     else
-      PTRACE(3, trace_section << "Failed to play welcome procedure file " << fileToPlay);
+      MCUTRACE(3, trace_section << "Failed to play welcome procedure file " << fileToPlay);
    }
 
   // File not played, call the wave end callback anyway
@@ -3394,7 +3411,7 @@ void MCUH323Connection::SetRemoteName(const H323SignalPDU & pdu)
     remoteUserName = signallingChannel->GetRemoteAddress().GetHostName();
 
   // remoteDisplayName
-  //remoteDisplayName = pdu.GetQ931().GetDisplayName();
+  //remoteDisplayName = pdu.GetQ931().GetDisplayName();//by aphero
   if(remoteDisplayName == "" && pdu.m_h323_uu_pdu.m_h323_message_body.GetTag() == H225_H323_UU_PDU_h323_message_body::e_setup)
   {
     const H225_Setup_UUIE & setup = pdu.m_h323_uu_pdu.m_h323_message_body;
@@ -3422,8 +3439,8 @@ void MCUH323Connection::SetRemoteName(const H323SignalPDU & pdu)
     remoteDisplayName = convert_cp1251_to_utf8(remoteDisplayName);
   }
 
-  PTRACE(2, trace_section << "SetRemoteName remoteUserName: " << remoteUserName);
-  PTRACE(2, trace_section << "SetRemoteName remoteDisplayName: " << remoteDisplayName);
+  MCUTRACE(2, trace_section << "SetRemoteName remoteUserName: " << remoteUserName);
+  MCUTRACE(2, trace_section << "SetRemoteName remoteDisplayName: " << remoteDisplayName);
   SetMemberName();
 }
 
@@ -3474,12 +3491,12 @@ void MCUH323Connection::SetMemberName()
 
   memberName = remoteDisplayName+" ["+address+"]";
 
-  PTRACE(2, trace_section << "SetMemberName remote account: " << GetRemoteUserName());
-  PTRACE(2, trace_section << "SetMemberName remoteUserName: " << remoteUserName);
-  PTRACE(2, trace_section << "SetMemberName remoteDisplayName: " << remoteDisplayName);
-  PTRACE(2, trace_section << "SetMemberName remotePartyAddress: " << remotePartyAddress);
-  PTRACE(2, trace_section << "SetMemberName remotePartyAliases: " << remoteAliasNames);
-  PTRACE(2, trace_section << "SetMemberName memberName: " << memberName);
+  MCUTRACE(2, trace_section << "SetMemberName remote account: " << GetRemoteUserName());
+  MCUTRACE(2, trace_section << "SetMemberName remoteUserName: " << remoteUserName);
+  MCUTRACE(2, trace_section << "SetMemberName remoteDisplayName: " << remoteDisplayName);
+  MCUTRACE(2, trace_section << "SetMemberName remotePartyAddress: " << remotePartyAddress);
+  MCUTRACE(2, trace_section << "SetMemberName remotePartyAliases: " << remoteAliasNames);
+  MCUTRACE(2, trace_section << "SetMemberName memberName: " << memberName);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3532,7 +3549,7 @@ BOOL MCUH323Connection::OnOutgoingAudio(const uint64_t & timestamp, void * buffe
       return TRUE;
     }
 
-    PTRACE(4, "MCU\tFinished playing file");
+    MCUTRACE(4, "MCU\tFinished playing file");
     playFile.Close();
 
     // Wave completed, if no event should be fired
@@ -3602,7 +3619,7 @@ MCUConnection_ConferenceMember::MCUConnection_ConferenceMember(Conference * _con
 
 MCUConnection_ConferenceMember::~MCUConnection_ConferenceMember()
 {
-  PTRACE(4, "MCUConnection_ConferenceMember deleted");
+  MCUTRACE(4, "MCUConnection_ConferenceMember deleted");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3628,8 +3645,7 @@ PString MCUConnection_ConferenceMember::GetMonitorInfo(const PString & hdr)
 // signal to codec plugin for disable(enable) decoding incoming video from unvisible(visible) member
 void MCUConnection_ConferenceMember::SetFreezeVideo(BOOL disable) const
 {
-  cout << id << "->SetFreezeVideo(" << disable << ")\n";
-  PTRACE(5,id << "->SetFreezeVideo(" << disable << ")");
+  MCUTRACE(5,id << "->SetFreezeVideo(" << disable << ")");
   MCUH323Connection * conn = ep.FindConnectionWithLock(callToken);
   if(conn == NULL)
     return;
@@ -3643,7 +3659,7 @@ void MCUConnection_ConferenceMember::SetFreezeVideo(BOOL disable) const
       channel->SetFreeze(disable);
   }
   else
-    PTRACE(2, "MCU\tWrong connection in SetFreezeVideo for " << callToken);
+    MCUTRACE(2, "MCU\tWrong connection in SetFreezeVideo for " << callToken);
 
   conn->Unlock();
 }
@@ -3652,7 +3668,7 @@ void MCUConnection_ConferenceMember::SetFreezeVideo(BOOL disable) const
 
 void MCUConnection_ConferenceMember::SendUserInputIndication(const PString & str)
 {
-  PTRACE(3, "Conference\tConnection " << id << " sending user indication " << str);
+  MCUTRACE(3, "Conference\tConnection " << id << " sending user indication " << str);
   MCUH323Connection * conn = ep.FindConnectionWithLock(callToken);
   if(conn == NULL)
     return;
@@ -3669,7 +3685,7 @@ void MCUConnection_ConferenceMember::SendUserInputIndication(const PString & str
   if(conn->GetConferenceMember() != this && conn->GetConferenceMember() != NULL)
   {
     conn->Unlock();
-    PTRACE(2, "MCU\tWrong connection in SendUserInputIndication for " << callToken);
+    MCUTRACE(2, "MCU\tWrong connection in SendUserInputIndication for " << callToken);
     return;
   }
 
@@ -3880,7 +3896,7 @@ void MCUConnection_ConferenceMember::SetChannelState(unsigned newMask)
   SetChannelPauses(newMask & operationalMask); // change to mute state
   UnsetChannelPauses(oldMask & operationalMask); // change to unmute state
 
-  PTRACE_IF(3, newMask!=ConferenceMember::muteMask, // final check
+  MCUTRACE_IF(3, newMask!=ConferenceMember::muteMask, // final check
     "MCUConn\tSetChState(" << newMask << "): " << ConferenceMember::muteMask);
 }
 
@@ -4082,7 +4098,7 @@ int ConnectionMonitor::RTPTimeoutMonitor(MCUH323Connection * conn)
   }
   if(conn->rtpInputLostInterval >= conn->rtpInputTimeout)
   {
-    PTRACE(2, "MCU\tConnection: " << conn->GetCallToken() << ", " << conn->rtpInputTimeout << " sec timeout waiting incoming stream data.");
+    MCUTRACE(2, "MCU\tConnection: " << conn->GetCallToken() << ", " << conn->rtpInputTimeout << " sec timeout waiting incoming stream data.");
     return 1; // leave
   }
 

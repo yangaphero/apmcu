@@ -306,7 +306,7 @@
  * Revision 1.13  2004/05/06 12:54:41  rjongbloed
  * Fixed Clone() functions in plug in capabilities so uses copy constructor and
  *   thus copies all fields and all ancestors fields.
- *   Thanks Gustavo García Bernardo Telefónica R&D
+ *   Thanks Gustavo Garcï¿½a Bernardo Telefï¿½nica R&D
  *
  * Revision 1.12  2004/05/04 03:33:33  csoutheren
  * Added guards against comparing certain kinds of Capabilities

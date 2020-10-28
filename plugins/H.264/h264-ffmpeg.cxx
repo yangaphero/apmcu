@@ -143,7 +143,7 @@ H264EncoderContext::H264EncoderContext()
   av_opt_set(_context->priv_data, "preset", "ultrafast", 0);            
   av_opt_set(_context->priv_data, "tune", "zerolatency", 0); 
   
-  //av_opt_set(_context->priv_data, "rc", "cbr", 0);//cbr的时候每帧前加了sei帧，注意
+  av_opt_set(_context->priv_data, "rc", "cbr", 0);//cbr的时候每帧前加了sei帧，注意
 	av_opt_set(_context->priv_data, "rc-lookahead", "0", 0);
 	av_opt_set(_context->priv_data, "delay", "0", 0);
 	av_opt_set(_context->priv_data, "zerolatency", "1", 0);
@@ -1016,6 +1016,7 @@ static int to_customised_options(const struct PluginCodec_Definition *, void *, 
   return 1;
 }
 
+//by aphero 下面是参数设置---重要
 static int encoder_set_options(
       const struct PluginCodec_Definition *, 
       void * _context, 
@@ -1036,7 +1037,7 @@ static int encoder_set_options(
     const char ** options = (const char **)parm;
     int i;
     for (i = 0; options[i] != NULL; i += 2) {
-    printf("%s %s\n",options[i],options[i+1]);
+    printf("[aphero] %s %s\n",options[i],options[i+1]);
       if (STRCMPI(options[i], "Encoding Quality") == 0)
          context->SetQuality (atoi(options[i+1]));
       if (STRCMPI(options[i], "Encoding Threads") == 0)
@@ -1079,6 +1080,7 @@ static int encoder_set_options(
     else if(profile&32!=0) profile=77; //main
     else profile=66; //baseline
 
+    //by aphero 下面是h241转换成264_levels
     for(i=0;h241_to_x264_levels[i].h241!=0;i++)
     {
      if(h241_to_x264_levels[i].h241==level) { level=h241_to_x264_levels[i].idc; break; }
@@ -1086,6 +1088,7 @@ static int encoder_set_options(
     if(h241_to_x264_levels[i].h241==0) level=13;
 
     TRACE(4, "H264\tCap\tProfile and Level: " << profile << ";" << context->constraints << ";" << level);
+    
 
     if(!custom_resolution)
     {
@@ -1333,13 +1336,11 @@ PLUGIN_CODEC_DLL_API struct PluginCodec_Definition * PLUGIN_CODEC_GET_CODEC_FN(u
 
   if (version < PLUGIN_CODEC_VERSION_OPTIONS) {
     *count = 0;
-    printf("H264\tCodec\tDisabled1\n");
     TRACE(1, "H264\tCodec\tDisabled - plugin version mismatch");
     return NULL;
   }
   else {
     *count = sizeof(h264CodecDefn) / sizeof(struct PluginCodec_Definition);
-    printf("H264\tCodec\tEnabled\n");
     TRACE(1, "H264\tCodec\tEnabled");
     return h264CodecDefn;
   }

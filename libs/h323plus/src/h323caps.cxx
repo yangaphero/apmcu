@@ -3044,8 +3044,8 @@ H323Capabilities::H323Capabilities(const H323Connection & connection,
 //        PTRACE(6,"PDU\tcap " << i << " has opt e_capability");
         H323Capability * capability = allCapabilities.FindCapability(pdu->m_capabilityTable[i].m_capability);
         if (capability != NULL) {
-/*
-          PTRACE(6,"PDU\tcap " << i << " has been found in local capability table: " << capability
+
+          PTRACE(1,"PDU\tcap " << i << " has been found in local capability table: " << capability
             << ", GetMainType(): "            << capability->GetMainType()
             << ", GetSubType(): "             << capability->GetSubType()
             << ", GetFormatName(): "          << capability->GetFormatName()
@@ -3055,7 +3055,18 @@ H323Capabilities::H323Capabilities(const H323Connection & connection,
             << ", GetMediaFormat(): "         << capability->GetMediaFormat()
             << ", GetPayloadType(): "         << capability->GetPayloadType()
           );
-*/
+
+          cout << "PDU\tcap " << i << " has been found in local capability table: " << capability
+            << ", GetMainType(): "            << capability->GetMainType()
+            << ", GetSubType(): "             << capability->GetSubType()
+            << ", GetFormatName(): "          << capability->GetFormatName()
+            << ", GetDefaultSessionID(): "    << capability->GetDefaultSessionID()
+            << ", GetCapabilityDirection(): " << capability->GetCapabilityDirection()
+            << ", GetCapabilityNumber(): "    << capability->GetCapabilityNumber()
+            << ", GetMediaFormat(): "         << capability->GetMediaFormat()
+            << ", GetPayloadType(): "         << capability->GetPayloadType()
+            <<"\n";
+
           H323Capability * copy = (H323Capability *)capability->Clone();
           copy->SetCapabilityNumber(pdu->m_capabilityTable[i].m_capabilityTableEntryNumber);
           if (copy->OnReceivedPDU(pdu->m_capabilityTable[i].m_capability))
@@ -3126,7 +3137,7 @@ H323Capabilities & H323Capabilities::operator=(const H323Capabilities & original
 void H323Capabilities::PrintOn(ostream & strm) const
 {
   int indent = (int)strm.precision()-1;
-  strm << setw(indent) << " " << "Table:\n";
+  strm << setw(indent) << "H323Capabilities " << "Table:\n";
   for (PINDEX i = 0; i < table.GetSize(); i++)
     strm << setw(indent+2) << " " << table[i] << '\n';
 
@@ -3766,7 +3777,7 @@ H323Capability * H323Capabilities::FindCapability(H323Capability::MainTypes main
 
 H323Capability * H323Capabilities::FindCapability(const H245_VideoCapability & video) const
 {
-//  PTRACE(3, "H323\tFindCapability12 " << video << "subtype " << video.GetTag());
+  PTRACE(3, "H323\tFindCapability12 " << video << "subtype " << video.GetTag());
   int frs[5]={0};
   int plus=0;
   unsigned int subType = video.GetTag();

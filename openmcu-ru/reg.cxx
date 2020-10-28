@@ -457,14 +457,14 @@ BOOL Registrar::MakeCall(const PString & room, const PString & to, PString & cal
     raccount_out->Unlock();
     // update url
     url = MCUURL(address);
-    PTRACE(1, "Registrar MakeCall: found the account, changed address " << address);
+    MCUTRACE(1, "Registrar MakeCall: found the account, changed address " << address);
   } else {
     raccount_out = InsertAccountWithLock(account_type, username_out);
     raccount_out->host = url.GetHostName();
     raccount_out->port = url.GetPort().AsInteger();
     raccount_out->transport = url.GetTransport();
     raccount_out->display_name = url.GetDisplayName();
-    PTRACE(1, "Registrar MakeCall: create new account " << raccount_out->GetUrl());
+    MCUTRACE(1, "Registrar MakeCall: create new account " << raccount_out->GetUrl());
     raccount_out->Unlock();
   }
 
@@ -480,7 +480,7 @@ BOOL Registrar::MakeCall(const PString & room, const PString & to, PString & cal
     if(url.GetHostName() == "")
     {
       address = url.GetUserName();
-      PTRACE(1, "Registrar MakeCall: changed address " << address);
+      MCUTRACE(1, "Registrar MakeCall: changed address " << address);
     }
     // gatekeeper
     H323Transport * transport = NULL;
@@ -490,14 +490,14 @@ BOOL Registrar::MakeCall(const PString & room, const PString & to, PString & cal
       if(url.GetHostName() == "" || gk_host == url.GetHostName())
       {
         address = url.GetUserName();
-        PTRACE(1, "Registrar MakeCall: changed address " << address);
+        MCUTRACE(1, "Registrar MakeCall: changed address " << address);
       }
       else
       {
         H323TransportAddress taddr(url.GetHostName()+":"+url.GetPort());
         transport = taddr.CreateTransport(*ep);
         transport->SetRemoteAddress(taddr);
-        PTRACE(1, "Registrar MakeCall: use transport " << taddr);
+        MCUTRACE(1, "Registrar MakeCall: use transport " << taddr);
       }
     }
     void *userData = new PString(room);
@@ -1253,7 +1253,7 @@ void Registrar::Terminating()
   // stop alive refresh
   if(aliveThread)
   {
-    PTRACE(5, trace_section << "Waiting for termination alive thread: " << aliveThread->GetThreadName());
+    MCUTRACE(5, trace_section << "Waiting for termination alive thread: " << aliveThread->GetThreadName());
     aliveThread->WaitForTermination();
     delete aliveThread;
     aliveThread = NULL;
@@ -1262,7 +1262,7 @@ void Registrar::Terminating()
   // stop abook refresh
   if(bookThread)
   {
-    PTRACE(5, trace_section << "Waiting for termination book thread: " << bookThread->GetThreadName());
+    MCUTRACE(5, trace_section << "Waiting for termination book thread: " << bookThread->GetThreadName());
     bookThread->WaitForTermination();
     delete bookThread;
     bookThread = NULL;
@@ -1277,7 +1277,7 @@ void Registrar::Terminating()
   // stop subscriptions refresh
   if(subscriptionThread)
   {
-    PTRACE(5, trace_section << "Waiting for termination book thread: " << connectionThread->GetThreadName());
+    MCUTRACE(5, trace_section << "Waiting for termination book thread: " << connectionThread->GetThreadName());
     subscriptionThread->WaitForTermination();
     delete subscriptionThread;
     subscriptionThread = NULL;
@@ -1286,7 +1286,7 @@ void Registrar::Terminating()
   // stop queue thread
   if(queueThread)
   {
-    PTRACE(5, trace_section << "Waiting for termination queue thread: " << queueThread->GetThreadName());
+    MCUTRACE(5, trace_section << "Waiting for termination queue thread: " << queueThread->GetThreadName());
     queueThread->WaitForTermination();
     delete queueThread;
     queueThread = NULL;
@@ -1295,7 +1295,7 @@ void Registrar::Terminating()
   // stop accounts refresh
   if(accountThread)
   {
-    PTRACE(5, trace_section << "Waiting for termination accounts thread: " << accountThread->GetThreadName());
+    MCUTRACE(5, trace_section << "Waiting for termination accounts thread: " << accountThread->GetThreadName());
     accountThread->WaitForTermination();
     delete accountThread;
     accountThread = NULL;
@@ -1304,7 +1304,7 @@ void Registrar::Terminating()
   // stop connections refresh
   if(connectionThread)
   {
-    PTRACE(5, trace_section << "Waiting for termination book thread: " << connectionThread->GetThreadName());
+    MCUTRACE(5, trace_section << "Waiting for termination book thread: " << connectionThread->GetThreadName());
     connectionThread->WaitForTermination();
     delete connectionThread;
     connectionThread = NULL;

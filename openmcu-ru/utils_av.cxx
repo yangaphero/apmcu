@@ -240,6 +240,8 @@ BOOL MCU_AVEncodeFrame(AVCodecID codec_id, const void * src, int src_size, void 
     goto end;
   }
 
+
+
   codec = avcodec_find_encoder(codec_id);
   if(codec == NULL)
   {
@@ -264,8 +266,14 @@ BOOL MCU_AVEncodeFrame(AVCodecID codec_id, const void * src, int src_size, void 
   context->qmin          = 2;
   context->qmax          = 2;
   context->time_base.num = 1;
-  context->time_base.den = 1;
+  context->time_base.den = 10;
   context->strict_std_compliance = FF_COMPLIANCE_UNOFFICIAL;
+
+//by aphero
+	frame->format = context->pix_fmt;
+	frame->width = context->width;
+	frame->height = context->height;
+
 
   // open codec
   avcodecMutex.Wait();

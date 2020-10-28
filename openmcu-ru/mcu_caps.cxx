@@ -126,6 +126,7 @@ void MCUPluginCodecManager::OnLoadPlugin(PDynaLink & dll, INT code)
   {
     PluginCodec_Definition & defn = codecsDefn[i];
     PString key = PString(defn.sourceFormat) + "|" + PString(defn.destFormat);
+   
     PluginCodecListType & pluginCodecList = MCUPluginCodecManager::GetPluginCodecList();
     if(code == 0)
     {

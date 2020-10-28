@@ -187,11 +187,8 @@ void MCUSipLoggerFunc(void *logarg, char const *fmt, va_list ap)
       return;
     logMsgBuf = logMsgBuf+trace;
     PRegularExpression RegEx("cseq: [0-9]* (options|info|publish|subscribe|notify)", PRegularExpression::Extended|PRegularExpression::IgnoreCase);
-    if(logMsgBuf.FindRegEx(RegEx) == P_MAX_INDEX)
-      PTRACE(1, logMsgBuf);
-    else
-      PTRACE(6, logMsgBuf);
-    MCUTRACE(0, logMsgBuf);
+
+    MCUTRACE(1, logMsgBuf);
     logMsgBuf = "";
     return;
   }
@@ -932,6 +929,7 @@ void MCUSipConnection::CreateLocalSipCaps()
   }
   if(video_capname != "" && video_capname.Right(4) != "{sw}")
     video_capname += "{sw}";
+ 
   PString video_fmtp = GetEndpointParam(VideoFmtpKey);
   unsigned frame_rate = GetEndpointParam(FrameRateFromKey, "0").AsInteger();
   unsigned bandwidth = GetEndpointParam(BandwidthFromKey, "0").AsInteger();
@@ -1032,7 +1030,11 @@ sdp_rtpmap_t * MCUSipConnection::CreateSdpRtpmap(su_home_t *sess_home, SipCapabi
   sdp_rtpmap_t *rm = (sdp_rtpmap_t *)su_salloc(sess_home, sizeof(*rm));
   rm->rm_predef = 0;
   rm->rm_pt = sc->payload;
+  if(sc->format == "h264hw") sc->format.Replace("hw","",TRUE,0);//by aphero
   rm->rm_encoding = PStringToChar(sc->format.ToUpper());
+  cout <<"format:" << sc->format <<"\n";
+
+  
   rm->rm_rate = sc->clock;
   if(sc->fmtp != "") rm->rm_fmtp = PStringToChar(sc->fmtp);
   if(sc->params != "") rm->rm_params = PStringToChar(sc->params);
@@ -1239,7 +1241,7 @@ PString MCUSipConnection::CreateSdpStr(SipCapMapType & LocalCaps)
 
   su_home_check(sess_home);
   su_home_unref(sess_home);
-
+  cout << "buffer:" << buffer <<"\n";
   return buffer;
 }
 
@@ -1431,7 +1433,57 @@ void MCUSipConnection::SelectCapability_H264(SipCapMapType & LocalCaps, SipCapab
     if(sprop != "") wf.SetOptionString("sprop-parameter-sets", sprop);
   }
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//by aphero 添加SelectCapability_H264HW
+void MCUSipConnection::SelectCapability_H264HW(SipCapMapType & LocalCaps, SipCapability *sc)
+{
+  PStringArray keys = sc->fmtp.Tokenise(";");
+  unsigned profile = 0, level = 0, level_h241 = 0, max_fs = 0, max_mbps = 0, max_br = 0;
+  PString sprop;
 
+  for(int kn = 0; kn < keys.GetSize(); kn++)
+  {
+    if(keys[kn].Find("sprop-parameter-sets=") == 0) { sprop = keys[kn].Right(keys[kn].GetLength() - PString("sprop-parameter-sets=").GetLength()); }
+  }
+
+  if(!sc->cap)
+  {
+    if(FindSipCap(LocalCaps, MEDIA_TYPE_VIDEO, "H.264HW{sw}")){//by aphero
+      sc->cap = MCUCapability::Create("H.264HW{sw}");
+    }else{//by aphero 先查找硬件HW，如果没有再查找SW软解
+      if(FindSipCap(LocalCaps, MEDIA_TYPE_VIDEO, "H.264{sw}"))//by aphero
+        sc->cap = MCUCapability::Create("H.264{sw}");
+    }
+    if(!sc->cap)
+      return;
+  }
+
+  SipCapability *local_sc = FindSipCap(LocalCaps, MEDIA_TYPE_VIDEO, sc->cap->GetFormatName());
+  if(local_sc->video_width) sc->video_width = local_sc->video_width;
+  if(local_sc->video_height) sc->video_height = local_sc->video_height;
+  if(local_sc->video_frame_rate) sc->video_frame_rate = local_sc->video_frame_rate;
+  if(local_sc->bandwidth) sc->bandwidth = local_sc->bandwidth;
+
+  if(sc->video_width == 0 && sc->video_height == 0)
+  {
+    for(int kn = 0; kn < keys.GetSize(); kn++)
+    {
+      if(keys[kn].Find("profile-level-id=") == 0) { int p = (keys[kn].Tokenise("=")[1]).AsInteger(16); profile = (p>>16); level = (p&255); }
+      else if(keys[kn].Find("max-mbps=") == 0)    { max_mbps = (keys[kn].Tokenise("=")[1]).AsInteger(); }
+      else if(keys[kn].Find("max-fs=") == 0)      { max_fs = (keys[kn].Tokenise("=")[1]).AsInteger(); }
+      else if(keys[kn].Find("max-br=") == 0)      { max_br = (keys[kn].Tokenise("=")[1]).AsInteger(); }
+    }
+    if(level == 0) level = 12; // default level
+    GetParamsH264(level, level_h241, max_fs, max_mbps, max_br, sc->video_width, sc->video_height);
+  }
+
+  if(sc->cap)
+  {
+    OpalMediaFormat & wf = sc->cap->GetWritableMediaFormat();
+    SetFormatParams(wf, sc->video_width, sc->video_height, sc->video_frame_rate, sc->bandwidth);
+    if(sprop != "") wf.SetOptionString("sprop-parameter-sets", sprop);
+  }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void MCUSipConnection::SelectCapability_VP8(SipCapMapType & LocalCaps, SipCapability *sc)
@@ -1985,10 +2037,17 @@ BOOL MCUSipConnection::MergeSipCaps(SipCapMapType & LocalCaps, SipCapMapType & R
       // preferred capability
       CheckPreferSipCap(LocalCaps, remote_sc);
       //
+      //cout << "aphero " << remote_sc->format <<"\n";
+
       if(remote_sc->format == "h261") SelectCapability_H261(LocalCaps, remote_sc);
       else if(remote_sc->format == "h263") SelectCapability_H263(LocalCaps, remote_sc);
       else if(remote_sc->format == "h263-1998") SelectCapability_H263p(LocalCaps, remote_sc);
-      else if(remote_sc->format == "h264") SelectCapability_H264(LocalCaps, remote_sc);
+      else if(remote_sc->format == "h264") {//by aphero
+        if(GetEndpointParam(VideoCodecKey) == "H.264HW{sw}")
+        SelectCapability_H264HW(LocalCaps, remote_sc);
+        else
+        SelectCapability_H264(LocalCaps, remote_sc);//by aphero
+      }
       else if(remote_sc->format == "mp4v-es") SelectCapability_MPEG4(LocalCaps, remote_sc);
       else if(remote_sc->format == "vp8") SelectCapability_VP8(LocalCaps, remote_sc);
     }

@@ -1,4 +1,3 @@
-
 #include "precompile.h"
 #include "mcu.h"
 
@@ -105,7 +104,7 @@ PString GetSectionParamFromUrl(PString param, PString addr, bool asterisk)
   }
 
   PString value = GetSectionParam(section_prefix, param, addr, asterisk);
-  PTRACE(1, "Get parameter (" << addr << ") \"" << param << "\" = " << value);
+  MCUTRACE(4, "Get parameter (" << addr << ") \"" << param << "\" = " << value);
   return value;
 }
 
@@ -248,7 +247,7 @@ PString convert_cp1251_to_utf8(PString str) // cp1251 -> utf8 translation based 
   }
   if(str != utf8)
   {
-    PTRACE(3, "Converted cp1251->utf8: " << str << " -> " << utf8);
+    MCUTRACE(3, "Converted cp1251->utf8: " << str << " -> " << utf8);
     return utf8;
   }
   return str;
@@ -281,7 +280,7 @@ PString convert_utf8_to_cp1251(PString utfstr)
     i++;
   }
 
-  PTRACE_IF(3, (cpstr != utfstr), "Converted utf8->cp1251: " << utfstr << " -> " << cpstr);
+  MCUTRACE_IF(3, (cpstr != utfstr), "Converted utf8->cp1251: " << utfstr << " -> " << cpstr);
   return cpstr;
 };
 
@@ -311,7 +310,7 @@ PString convert_ucs2_to_utf8(PString str)
   }
   if(str != utf8)
   {
-    PTRACE(1, "Converted ucs2->utf8: " << str << " -> " << utf8);
+    MCUTRACE(1, "Converted ucs2->utf8: " << str << " -> " << utf8);
     return utf8;
   } else {
     return str;
@@ -371,7 +370,7 @@ BOOL SkipCapability(const PString & formatName, MCUConnectionTypes connectionTyp
   else if(connectionType == CONNECTION_TYPE_RTSP)
   {
     if(formatName.Find("G.711") != 0 && formatName.Find("Speex") != 0 && formatName.Find("OPUS") != 0 && formatName.Find("AC3") != 0 &&
-       formatName.Find("H.263p{sw}") != 0 && formatName.Find("H.264{sw}") != 0 && formatName.Find("MP4V-ES{sw}") != 0
+       formatName.Find("H.263p{sw}") != 0 && formatName.Find("H.264{sw}") != 0 && formatName.Find("H.264HW{sw}") != 0 && formatName.Find("MP4V-ES{sw}") != 0
       )
       return TRUE;
   }

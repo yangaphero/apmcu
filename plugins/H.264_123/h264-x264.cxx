@@ -209,9 +209,9 @@ H264DecoderContext::H264DecoderContext()
   _frameCounter = 0; 
   _skippedFrameCounter = 0;
   _rxH264Frame = new H264Frame();
-  img_convert_ctx = NULL;
 
-  if ((_codec = avcodec_find_decoder_by_name("h264_cuvid")) == NULL) {//h264_cuvid
+
+  if ((_codec = avcodec_find_decoder_by_name("h264")) == NULL) {//h264_cuvid
     cout << "H264\tDecoder\tCodec not found for decoder\n";
     return;
   }
@@ -265,11 +265,6 @@ H264DecoderContext::~H264DecoderContext()
  if (_context != NULL) av_free(_context);
  if (_outputFrame != NULL) av_free(_outputFrame);
  if (_rxH264Frame) delete _rxH264Frame;
-  //by aphero
-  if (img_convert_ctx !=NULL) sws_freeContext(img_convert_ctx);
-  if (out_buffer != NULL) av_free(out_buffer);
-  if (pFrameYUV != NULL) av_free(pFrameYUV);
-  //by aphero end
 }
 
 void H264DecoderContext::SetSpropParameter(const char *value)
@@ -434,19 +429,6 @@ int H264DecoderContext::DecodeFrames(const u_char * src, unsigned & srcLen, u_ch
   header->width = _context->width;
   header->height = _context->height;
 
-  //by aphero  添加色彩转换 只执行一次
-  if (_outputFrame->format !=AV_PIX_FMT_YUV420P && img_convert_ctx == NULL){
-    cout << "H264\tNot YUV420P,covert!\n";
-    pFrameYUV=av_frame_alloc();
-    if (pFrameYUV == NULL){
-      return 1;
-    }
-    out_buffer = (unsigned char *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV420P, _context->width, _context->height, 1));
-    av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, out_buffer, AV_PIX_FMT_YUV420P, _context->width, _context->height, 1);
-    img_convert_ctx = sws_getContext(_context->width, _context->height, _context->pix_fmt, _context->width, _context->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
-  }
-  //by aphero
-
 
   int size = _context->width * _context->height;
   if (_outputFrame->data[1] == _outputFrame->data[0] + size
@@ -457,34 +439,7 @@ int H264DecoderContext::DecodeFrames(const u_char * src, unsigned & srcLen, u_ch
   else 
   {
     unsigned char *dstData = OPAL_VIDEO_FRAME_DATA_PTR(header);
-    if (_outputFrame->format !=AV_PIX_FMT_YUV420P && img_convert_ctx != NULL)//添加的代码
-    {//如果解码出来的格式不是420p的就读取转换后的pFrameYUV的数据
-      sws_scale(img_convert_ctx, (const unsigned char* const*)_outputFrame->data, _outputFrame->linesize, 0, _context->height, pFrameYUV->data, pFrameYUV->linesize);
-      for (int i=0; i<3; i ++)
-      {
-        unsigned char *srcData = pFrameYUV->data[i];
-        int dst_stride = i ? _context->width >> 1 : _context->width;
-        int src_stride = pFrameYUV->linesize[i];
-        int h = i ? _context->height >> 1 : _context->height;
-
-        if (src_stride==dst_stride)
-        {
-          memcpy(dstData, srcData, dst_stride*h);
-          dstData += dst_stride*h;
-        }
-        else
-        {
-          while (h--)
-          {
-            memcpy(dstData, srcData, dst_stride);
-            dstData += dst_stride;
-            srcData += src_stride;
-          }
-        }
-      }
-    }
-    else// 原来的代码，如果解码出来的格式是420p的就读取解码后的_outputFrame的数据
-    {
+ 
       for (int i=0; i<3; i ++)
       {
         unsigned char *srcData = _outputFrame->data[i];
@@ -507,7 +462,7 @@ int H264DecoderContext::DecodeFrames(const u_char * src, unsigned & srcLen, u_ch
           }
         }
       }
-    }
+
   }
 
   dstRTP.SetPayloadSize(sizeof(PluginCodec_Video_FrameHeader) + frameBytes);

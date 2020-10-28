@@ -1723,7 +1723,7 @@ function frameload(i)
 function reframe(i)
 {
   document.getElementById('frame'+i).src=jpegframes[i][1].src;
-  jpegframes[i][2]=setTimeout(function(){frameload(i);},1999);
+  jpegframes[i][2]=setTimeout(function(){frameload(i);},99);
 }
 
 function selector_window(mixerNumber)
@@ -2033,7 +2033,7 @@ function get_mixers_content()
       s+="<div id='pp"+mixer_number+"_"+j+"' style='position:relative;top:"+(pos_y+y)+"px;left:"+(pos_x+x)+"px;width:0px;height:0px'>"; // pointing block for member's mockup
         s+="<div id='pr"+mixer_number+"_"+j+"'"+ // rectangle for member's mockup
           " onmousedown='ddstart(event,this,"+mixer_number+","+j+")' onmouseover='ddover(event,this,"+mixer_number+","+j+")' onmouseout='ddout(event,this,"+mixer_number+","+j+")'"+
-          " style='overflow:hidden;opacity:0.5;filter:alpha(opacity=50);position:absolute;background-color:#F2F2F2;text-align:center;"+
+          " style='overflow:hidden;opacity:0.5;filter:alpha(opacity=50);position:absolute;text-align:center;"+
            "border:"+border+";padding:0;cursor:move;width:"+(w-2)+"px;height:"+(h-2)+"px'>";
         s+=get_mixer_position_html(i, j);
         s+="</div>";
@@ -2092,7 +2092,7 @@ function get_mixers_content_classic()
       s+="<div id='pp"+i+"_"+j+"' style='position:relative;top:"+(pos_y+y)+"px;left:"+(pos_x+x)+"px;width:0px;height:0px'>"; // pointing block for member's mockup
         s+="<div id='pr"+i+"_"+j+"'"+ // rectangle for member's mockup
           " onmousedown='ddstart(event,this,"+i+","+j+")' onmouseover='ddover(event,this,"+i+","+j+")' onmouseout='ddout(event,this,"+i+","+j+")'"+
-          " style='overflow:hidden;opacity:0.5;filter:alpha(opacity=50);position:absolute;background-color:#F2F2F2;text-align:center;"+
+          " style='overflow:hidden;opacity:0.5;filter:alpha(opacity=50);position:absolute;text-align:center;"+
            "border:"+border+";padding:0;cursor:move;width:"+(w-2)+"px;height:"+(h-2)+"px'>";
         s+=get_mixer_position_html(i,j);
         s+="</div>";
@@ -2175,7 +2175,7 @@ function mixrfr()
       s+="<div id='pp"+mixer_number+"_"+j+"' style='position:relative;top:"+(pos_y+y)+"px;left:"+(pos_x+x)+"px;width:0px;height:0px'>"; // pointing block for member's mockup
         s+="<div id='pr"+mixer_number+"_"+j+"'"+ // rectangle for member's mockup
           " onmousedown='ddstart(event,this,"+mixer_number+","+j+")' onmouseover='ddover(event,this,"+mixer_number+","+j+")' onmouseout='ddout(event,this,"+mixer_number+","+j+")'"+
-          " style='overflow:hidden;opacity:0.5;filter:alpha(opacity=50);position:absolute;background-color:#F2F2F2;text-align:center;"+
+          " style='overflow:hidden;opacity:0.5;filter:alpha(opacity=50);position:absolute;text-align:center;"+
            "border:"+border+";padding:0;cursor:move;width:"+(w-2)+"px;height:"+(h-2)+"px'>";
         s+=get_mixer_position_html(i,j);
         s+="</div>";
@@ -2259,7 +2259,7 @@ function get_mixer_position_html(mixer, position)
   { s+="<div style='position:relative;top:0px;left:"+(type_width)+"px;width:0px;height:0px'>";
      s+="<div id='us"+mixer_number+"_"+p+"'"
        +" onmouseout='javascript:{prvnt=0;}' onmouseover='javascript:{prvnt=1;}' onclick='javascript:{member_selector(this,"+mixer_number+","+p+","+id+")}'"
-       +" style='x-overflow:hidden;white-space:nowrap;cursor:pointer;width:"+(user_width)+"px;height:"+(label_height-2)+"px'>";
+       +" style='color:#ff0000;font-weight: bold;x-overflow:hidden;white-space:nowrap;cursor:pointer;width:"+(user_width)+"px;height:"+(label_height-2)+"px'>";
     s+=memberName;
     s+="</div></div>";
   }

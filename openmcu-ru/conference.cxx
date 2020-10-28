@@ -112,7 +112,7 @@ Conference * ConferenceManager::MakeConferenceWithLock(const PString & room, PSt
       ignoreRestriction = TRUE;
     if(ignoreRestriction == FALSE && GetConferenceParam(room, RoomAutoCreateWhenConnectingKey, TRUE) == FALSE)
     {
-      PTRACE(1, "error");
+      MCUTRACE(1, "error");
       return NULL;
     }
     // create the conference
@@ -353,7 +353,7 @@ void ConferenceManager::OnCreateConference(Conference * conference)
 
   if(!conference->GetForceScreenSplit())
   {
-    PTRACE(1,"Conference\tOnCreateConference: \"Force split screen video\" unchecked, " << conference->GetNumber() << " skipping members.conf");
+    MCUTRACE(1,"Conference\tOnCreateConference: \"Force split screen video\" unchecked, " << conference->GetNumber() << " skipping members.conf");
     return;
   }
 
@@ -379,7 +379,7 @@ void ConferenceManager::OnCreateConference(Conference * conference)
   { PINDEX dp2=membersConf.Find('\n',dp+10);
     if(dp2!=P_MAX_INDEX)
     { PString lastUsedTemplate=membersConf.Mid(dp+11,dp2-dp-11).Trim();
-      PTRACE(4, "Extracting & loading last used template: " << lastUsedTemplate);
+      MCUTRACE(4, "Extracting & loading last used template: " << lastUsedTemplate);
       conference->confTpl=conference->ExtractTemplate(lastUsedTemplate);
       conference->LoadTemplate(conference->confTpl);
     }
@@ -391,7 +391,7 @@ void ConferenceManager::OnCreateConference(Conference * conference)
 void ConferenceManager::OnDestroyConference(Conference * conference)
 {
   PString number = conference->GetNumber();
-  PTRACE(2,"MCU\tOnDestroyConference " << number);
+  MCUTRACE(2,"MCU\tOnDestroyConference " << number);
   conference->stopping=TRUE;
 
   MCUMemberList & memberList = conference->GetMemberList();
@@ -400,7 +400,7 @@ void ConferenceManager::OnDestroyConference(Conference * conference)
   jsName.Replace("\"","\\x27",TRUE,0); jsName.Replace("'","\\x22",TRUE,0);
 
   OpenMCU::Current().HttpWriteCmdRoom("notice_deletion(1,'" + jsName + "')", number);
-  PTRACE(2,"MCU\tOnDestroyConference " << number <<", disconnect remote endpoints");
+  MCUTRACE(2,"MCU\tOnDestroyConference " << number <<", disconnect remote endpoints");
 
   for(MCUMemberList::shared_iterator it = memberList.begin(); it != memberList.end(); ++it)
   {
@@ -492,7 +492,7 @@ void ConferenceManager::RemoveConference(const PString & room)
     {
       OnDestroyConference(conference);
       delete conference;
-      PTRACE(1, "RemoveConference");
+      MCUTRACE(1, "RemoveConference");
     }
   }
 }
@@ -508,7 +508,7 @@ void ConferenceManager::ClearConferenceList()
     {
       OnDestroyConference(conference);
       delete conference;
-      PTRACE(1, "RemoveConference");
+      MCUTRACE(1, "RemoveConference");
     }
   }
 }
@@ -661,7 +661,7 @@ Conference::Conference(ConferenceManager & _manager, long _listID,
   pipeMember = NULL;
   dialCountdown = OpenMCU::Current().autoDialDelay;
   SetMasterVolumeDB(0);
-  PTRACE(3, "Conference\tNew conference started: ID=" << guid << ", number = " << number);
+  MCUTRACE(3, "Conference\tNew conference started: ID=" << guid << ", number = " << number);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -694,12 +694,12 @@ BOOL Conference::RecorderCheckSpace()
   DWORD cs;
   if(!pd.GetVolumeSpace(t, f, cs))
   {
-    PTRACE(1, trace_section << "Recorder space check failed");
+    MCUTRACE(1, trace_section << "Recorder space check failed");
     return TRUE;
   }
   BOOL result = ((f>>20) >= OpenMCU::Current().vr_minimumSpaceMiB);
   if(!result) OpenMCU::Current().HttpWriteEvent("<b><font color='red'>Insufficient disk space</font>: Video Recorder DISABLED</b>");
-  PTRACE_IF(1,!result, trace_section << "Insufficient disk space: Video Recorder DISABLED");
+  MCUTRACE_IF(1,!result, trace_section << "Insufficient disk space: Video Recorder DISABLED");
   return result;
 }
 
@@ -716,7 +716,7 @@ BOOL Conference::StartRecorder()
     return FALSE;
   if(!PDirectory::Exists(OpenMCU::Current().vr_ffmpegDir))
   {
-    PTRACE(1, trace_section << "Recorder failed to start (check recorder directory)");
+    MCUTRACE(1, trace_section << "Recorder failed to start (check recorder directory)");
     OpenMCU::Current().HttpWriteEventRoom("Recorder failed to start (check recorder directory)", number);
     return FALSE;
   }
@@ -730,11 +730,11 @@ BOOL Conference::StartRecorder()
 
   if(!conferenceRecorder->IsRunning())
   {
-    PTRACE(1, trace_section << "failed to start recorder");
+    MCUTRACE(1, trace_section << "failed to start recorder");
     return FALSE;
   }
 
-  PTRACE(1, trace_section << "video recorder started");
+  MCUTRACE(1, trace_section << "video recorder started");
   OpenMCU::Current().HttpWriteEventRoom("video recording started", number);
   OpenMCU::Current().HttpWriteCmdRoom(OpenMCU::Current().GetEndpoint().GetConferenceOptsJavascript(*this), number);
   OpenMCU::Current().HttpWriteCmdRoom("build_page()", number);
@@ -751,7 +751,7 @@ BOOL Conference::StopRecorder()
     return TRUE;
   conferenceRecorder->Stop();
 
-  PTRACE(1, trace_section << "video recorder stopped");
+  MCUTRACE(1, trace_section << "video recorder stopped");
   OpenMCU::Current().HttpWriteEventRoom("video recording stopped", number);
   OpenMCU::Current().HttpWriteCmdRoom(OpenMCU::Current().GetEndpoint().GetConferenceOptsJavascript(*this), number);
   OpenMCU::Current().HttpWriteCmdRoom("build_page()", number);
@@ -768,7 +768,7 @@ MCUMemberList::shared_iterator Conference::AddMemberToList(ConferenceMember * me
 
   if(memberList.Find((long)memberToAdd->GetID()) != memberList.end())
   {
-    PTRACE(1, trace_section << "Rejected duplicate member ID: " << (long)memberToAdd->GetID() << " " << memberToAdd->GetName());
+    MCUTRACE(1, trace_section << "Rejected duplicate member ID: " << (long)memberToAdd->GetID() << " " << memberToAdd->GetName());
     return it;
   }
 
@@ -787,7 +787,7 @@ MCUMemberList::shared_iterator Conference::AddMemberToList(ConferenceMember * me
         PStringStream msg;
         msg << JsQuoteScreen(memberToAdd->GetName()) << " REJECTED - DUPLICATE NAME";
         OpenMCU::Current().HttpWriteEventRoom(msg, number);
-        PTRACE(1, trace_section << "Rejected duplicate name: " << memberToAdd->GetName());
+        MCUTRACE(1, trace_section << "Rejected duplicate name: " << memberToAdd->GetName());
         return it;
       }
       memberToAdd->SetName(memberName+" ##"+PString(i+2));
@@ -816,7 +816,7 @@ BOOL Conference::AddMember(ConferenceMember * memberToAdd, BOOL addToList)
   // notify that member is joined
   if(memberToAdd->IsJoined())
   {
-    PTRACE(4, trace_section << "member already joined " << memberToAdd->GetName());
+    MCUTRACE(4, trace_section << "member already joined " << memberToAdd->GetName());
     return TRUE;
   }
   memberToAdd->SetJoined(TRUE);
@@ -908,7 +908,7 @@ BOOL Conference::RemoveMember(ConferenceMember * memberToRemove, BOOL removeFrom
   // notify that member is not joined anymore
   if(!memberToRemove->IsJoined())
   {
-    PTRACE(4, trace_section << "member not joined " << memberToRemove->GetName());
+    MCUTRACE(4, trace_section << "member not joined " << memberToRemove->GetName());
     return TRUE;
   }
   memberToRemove->SetJoined(FALSE);
@@ -1145,7 +1145,7 @@ void Conference::ReadMemberVideo(ConferenceMember * member, void * buffer, int w
     mixer = manager.GetVideoMixerWithLock(this);
     if(mixer == NULL)
     {
-      PTRACE(3, trace_section << "Could not get video");
+      MCUTRACE(3, trace_section << "Could not get video");
       return;
     }
   }
@@ -1272,14 +1272,14 @@ BOOL Conference::PutChosenVan()
 
 void Conference::HandleFeatureAccessCode(ConferenceMember & member, PString fac)
 {
-  PTRACE(3, trace_section << "Handling feature access code " << fac << " from " << member.GetName());
+  MCUTRACE(3, trace_section << "Handling feature access code " << fac << " from " << member.GetName());
   PStringArray s = fac.Tokenise("*");
   if(s[0]=="1")
   {
     int posTo=0;
     if(s.GetSize() > 1)
       posTo=s[1].AsInteger();
-    PTRACE(4, trace_section << "*1*" << posTo << "#: jump into video position " << posTo);
+    MCUTRACE(4, trace_section << "*1*" << posTo << "#: jump into video position " << posTo);
 
     if(videoMixerList.GetSize() == 0)
       return;
@@ -1603,7 +1603,7 @@ void ConferenceMember::ChannelStateUpdate(unsigned bit, BOOL state)
 
   PStringStream msg;
   msg << "rtp_state(" << dec << (long)id << "," << bit << "," << state << ")";
-  PTRACE(1, name << " " << msg);
+  MCUTRACE(1, name << " " << msg);
 
   if(conference)
     OpenMCU::Current().HttpWriteCmdRoom(msg, conference->GetNumber());
@@ -1677,7 +1677,7 @@ void ConferenceMember::Gain(const short * pcm, unsigned samplesPerFrame, unsigne
     else buf[i] = (short)v;
     vc0*=delta0;
   }
-  PTRACE(6, "AGC\tname=" << name << " spf=" << samplesPerFrame << " cs=" << codecChannels << " sr=" << sampleRate << " level=" << avgLevel << "/" << maxLevel << " cvc=" << cvc << " kM=" << kManualGain << " delta0=" << delta0 << " ovr=" << constOverload << " good=" << constGood << " maxChngDB=" << maxChangeDB);
+  MCUTRACE(6, "AGC\tname=" << name << " spf=" << samplesPerFrame << " cs=" << codecChannels << " sr=" << sampleRate << " level=" << avgLevel << "/" << maxLevel << " cvc=" << cvc << " kM=" << kManualGain << " delta0=" << delta0 << " ovr=" << constOverload << " good=" << constGood << " maxChngDB=" << maxChangeDB);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1695,7 +1695,7 @@ BOOL ConferenceMember::DetectSilence(unsigned level, int tint)
   else if((++silenceDetectorFrameCounter) >= (inTalkBurst ? silenceDeadbandFrames : signalDeadbandFrames))
   {
     inTalkBurst = !inTalkBurst; // Have had enough consecutive frames talking/silent, swap modes.
-    PTRACE(5, "ConferenceMember\tSilence detector transition: " << (inTalkBurst ? "Talk" : "Silent") << " avg/thrs=" << level << "/" << signalDetectorThreshold);
+    MCUTRACE(5, "ConferenceMember\tSilence detector transition: " << (inTalkBurst ? "Talk" : "Silent") << " avg/thrs=" << level << "/" << signalDetectorThreshold);
 
     signalMinimum = UINT_MAX; silenceMaximum = 0; signalFramesReceived = 0; silenceFramesReceived = 0; // Restart adaptive threshold measurements
   }
@@ -1706,7 +1706,7 @@ BOOL ConferenceMember::DetectSilence(unsigned level, int tint)
     {
       // Bootstrap condition, use first frame level as silence level
       signalDetectorThreshold = PMIN(level, VAlevel);
-      PTRACE(5, "Codec\tSilence detection threshold initialised to: " << signalDetectorThreshold);
+      MCUTRACE(5, "Codec\tSilence detection threshold initialised to: " << signalDetectorThreshold);
     }
     return TRUE; // inTalkBurst always FALSE here, so return silent
   }
@@ -1739,7 +1739,7 @@ BOOL ConferenceMember::DetectSilence(unsigned level, int tint)
       {
         signalDetectorThreshold += delta;
         if(signalDetectorThreshold > VAlevel) signalDetectorThreshold=VAlevel;
-        PTRACE(5, "Codec\tSilence detection threshold increased to: " << signalDetectorThreshold);
+        MCUTRACE(5, "Codec\tSilence detection threshold increased to: " << signalDetectorThreshold);
       }
     }
     else if (silenceFramesReceived >= atff)
@@ -1753,7 +1753,7 @@ BOOL ConferenceMember::DetectSilence(unsigned level, int tint)
       if(signalDetectorThreshold > newThreshold)
       {
         signalDetectorThreshold = PMIN(newThreshold, VAlevel);
-        PTRACE(5, "Codec\tSilence detection threshold decreased to: " << signalDetectorThreshold);
+        MCUTRACE(5, "Codec\tSilence detection threshold decreased to: " << signalDetectorThreshold);
       }
     }
     else if (signalFramesReceived > silenceFramesReceived)
@@ -1762,7 +1762,7 @@ BOOL ConferenceMember::DetectSilence(unsigned level, int tint)
       // constantly hovering at the threshold and have more signal than
       // silence we should creep up a bit.
       signalDetectorThreshold++;
-      PTRACE(5, "Codec\tSilence detection threshold incremented to: " << signalDetectorThreshold
+      MCUTRACE(5, "Codec\tSilence detection threshold incremented to: " << signalDetectorThreshold
                << " signal=" << signalFramesReceived << ' ' << signalMinimum
                << " silence=" << silenceFramesReceived << ' ' << silenceMaximum);
     }
@@ -2028,7 +2028,7 @@ void ConferenceAudioConnection::WriteAudio(const uint64_t & srcTimestamp, const 
     if(writeTimestamp + PCM_BUFFER_LAG_MS*1000 < srcTimestamp)
     {
       srcTimeIndex = srcTimestamp/1000 - startTimestamp/1000 - frameTime;
-      PTRACE(6, "ConferenceAudioConnection\tWriter has lost " << srcTimestamp - writeTimestamp << " us"
+      MCUTRACE(6, "ConferenceAudioConnection\tWriter has lost " << srcTimestamp - writeTimestamp << " us"
                 << ", start=" << startTimestamp << " write=" << writeTimestamp  << " src=" << srcTimestamp
                 << " index=" << timeIndex << " frame=" << frameTime);
     }
@@ -2212,20 +2212,20 @@ BOOL AudioResampler::Initialise()
     MCU_AV_CH_Layout_Selector[srcChannels], AV_SAMPLE_FMT_S16, srcSampleRate, 0, NULL);
   if(swrc == NULL)
   {
-    PTRACE(1, "AudioResampler\tcould not allocate resampler context");
+    MCUTRACE(1, "AudioResampler\tcould not allocate resampler context");
     return FALSE;
   }
   int ret = swr_init(swrc);
   if(ret < 0)
   {
-    PTRACE(1, "AudioResampler\tfailed to initialize the resampling context: " << ret << " " << AVErrorToString(ret));
+    MCUTRACE(1, "AudioResampler\tfailed to initialize the resampling context: " << ret << " " << AVErrorToString(ret));
     return FALSE;
   }
 #elif USE_AVRESAMPLE
   swrc = avresample_alloc_context();
   if(swrc == NULL)
   {
-    PTRACE(1, "AudioResampler\tcould not allocate resampler context");
+    MCUTRACE(1, "AudioResampler\tcould not allocate resampler context");
     return FALSE;
   }
   av_opt_set_int(swrc, "in_sample_fmt",      AV_SAMPLE_FMT_S16, 0);
@@ -2237,7 +2237,7 @@ BOOL AudioResampler::Initialise()
   int ret = avresample_open(swrc);
   if(ret < 0)
   {
-    PTRACE(1, "AudioResampler\tfailed to initialize the resampling context: " << ret << " " << AVErrorToString(ret));
+    MCUTRACE(1, "AudioResampler\tfailed to initialize the resampling context: " << ret << " " << AVErrorToString(ret));
     return FALSE;
   }
 #elif USE_LIBSAMPLERATE
@@ -2264,7 +2264,7 @@ void AudioResampler::Resample(const BYTE * src, int srcBytes, BYTE * dst, int ds
   int ret = swr_convert(swrc, (uint8_t **)&to, dstSamples, (const uint8_t **)&from, srcSamples);
   if(ret < 0)
   {
-    PTRACE(1, "AudioResampler\terror while converting: " << ret << " " << AVErrorToString(ret));
+    MCUTRACE(1, "AudioResampler\terror while converting: " << ret << " " << AVErrorToString(ret));
     memset(dst, 0, dstBytes);
   }
 #elif USE_AVRESAMPLE
@@ -2276,7 +2276,7 @@ void AudioResampler::Resample(const BYTE * src, int srcBytes, BYTE * dst, int ds
   int ret = avresample_convert(swrc, (uint8_t **)&to, dstBytes, dstSamples, (uint8_t **)&from, srcBytes, srcSamples);
   if(ret < 0)
   {
-    PTRACE(1, "AudioResampler\terror while converting: " << ret << " " << AVErrorToString(ret));
+    MCUTRACE(1, "AudioResampler\terror while converting: " << ret << " " << AVErrorToString(ret));
     memset(dst, 0, dstBytes);
   }
 #elif USE_LIBSAMPLERATE
@@ -2296,7 +2296,7 @@ void AudioResampler::Resample(const BYTE * src, int srcBytes, BYTE * dst, int ds
   int err = src_process(swrc, &src_data);
   if(err)
   {
-    PTRACE(1, "AudioResampler\terror while converting: " << src_strerror(err));
+    MCUTRACE(1, "AudioResampler\terror while converting: " << src_strerror(err));
     memset(dst, 0, dstBytes);
     return;
   }

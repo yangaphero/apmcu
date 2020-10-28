@@ -150,11 +150,7 @@ class H264DecoderContext
     AVPacket _pkt;
     H264Frame* _rxH264Frame;
 
-    //by aphero 添加色彩转换
-    AVFrame	*pFrameYUV;
-    uint8_t *out_buffer;
-    struct SwsContext *img_convert_ctx;
-    //by aphero end
+
 
     bool freezeVideo;
     bool _gotIFrame;
